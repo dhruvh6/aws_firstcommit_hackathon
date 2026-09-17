@@ -16,13 +16,8 @@
  *   - At runtime prefer the labels from GET /v1/meta/categories; this file is
  *     the typed fallback so components never hardcode enum lists.
  *
- * Known gap: docs/07-DESIGN-SYSTEM.md § 4 "Status chip mapping" is FROZEN and
- * does not assign a chip variant to Condition's CLEAN_USABLE value (it lists
- * UNUSED, MIXED and NEEDS_SORTING but not CLEAN_USABLE). Rather than invent
- * one, STATUS_CHIP_VARIANT below is typed only over ListingStatus |
- * RequirementStatus | ReservationStatus, which the table covers exhaustively.
- * Condition is intentionally not part of the chip-variant map - flagged to
- * M1 to raise as a docs issue.
+ * The CLEAN_USABLE gap flagged here on 17 September is resolved: docs/07 § 4 now
+ * maps it to `ok`, and STATUS_CHIP_VARIANT below covers Condition as well.
  */
 
 import type {
@@ -124,17 +119,24 @@ export type ChipVariant = 'ok' | 'warn' | 'info' | 'neutral';
 
 /**
  * docs/07-DESIGN-SYSTEM.md § 4 "Status chip mapping". Exhaustive over
- * ListingStatus | RequirementStatus | ReservationStatus only - see the
- * "Known gap" note above for why Condition is excluded.
+ * ListingStatus | RequirementStatus | ReservationStatus | Condition, so a new
+ * enum value cannot be added to docs/02 § 3 without failing this typecheck -
+ * which is the point.
  */
-const STATUS_CHIP_VARIANT: Record<ListingStatus | RequirementStatus | ReservationStatus, ChipVariant> = {
+const STATUS_CHIP_VARIANT: Record<
+  ListingStatus | RequirementStatus | ReservationStatus | Condition,
+  ChipVariant
+> = {
   ACTIVE: 'ok',
   OPEN: 'ok',
   HANDED_OFF: 'ok',
+  UNUSED: 'ok',
+  CLEAN_USABLE: 'ok',
 
   PARTIALLY_RESERVED: 'warn',
   PARTIALLY_FULFILLED: 'warn',
   RESERVED: 'warn',
+  MIXED: 'warn',
 
   FULLY_RESERVED: 'info',
   FULFILLED: 'info',
@@ -143,11 +145,12 @@ const STATUS_CHIP_VARIANT: Record<ListingStatus | RequirementStatus | Reservatio
   EXPIRED: 'neutral',
   WITHDRAWN: 'neutral',
   CANCELLED: 'neutral',
+  NEEDS_SORTING: 'neutral',
 };
 
 /**
- * Safe status -> chip variant lookup. Never throws; an unknown value (or a
- * Condition value, which this table doesn't cover) falls back to 'neutral'.
+ * Safe status -> chip variant lookup. Never throws; an unknown value falls back
+ * to 'neutral' (docs/07 § 4 "Unknown enum fallback").
  */
 export function statusChipVariant(value: string): ChipVariant {
   return (STATUS_CHIP_VARIANT as Record<string, ChipVariant>)[value] ?? 'neutral';

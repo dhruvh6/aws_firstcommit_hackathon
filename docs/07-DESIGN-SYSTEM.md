@@ -167,10 +167,18 @@ screenshot and a colour-blind viewer. Never truncate a `detail` string; wrap it.
 
 | Status | Chip |
 |---|---|
-| `ACTIVE`, `UNUSED`, `OPEN`, `HANDED_OFF` | `ok` |
+| `ACTIVE`, `UNUSED`, `CLEAN_USABLE`, `OPEN`, `HANDED_OFF` | `ok` |
 | `PARTIALLY_RESERVED`, `PARTIALLY_FULFILLED`, `RESERVED`, `MIXED` | `warn` |
 | `FULLY_RESERVED`, `FULFILLED`, `COMPLETED` | `info` |
 | `EXPIRED`, `WITHDRAWN`, `CANCELLED`, `NEEDS_SORTING` | `neutral` |
+
+The table is exhaustive over `ListingStatus`, `RequirementStatus`,
+`ReservationStatus` and `Condition`. **Contract change, 18 September:**
+`CLEAN_USABLE` was missing from the original table - M1 spotted the gap while
+building `labels.ts` and correctly declined to invent a variant. It maps to `ok`,
+because it is an acceptable condition alongside `UNUSED`, and a buyer who
+accepted it should not see a warning colour on material that satisfies their
+requirement.
 
 ### Unknown enum fallback
 
