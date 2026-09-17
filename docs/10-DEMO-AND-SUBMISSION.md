@@ -9,6 +9,9 @@ Where this document and the **live official rules** disagree, the official rules
 ## 1. Eligibility - verify on Day 1, per member
 
 Each member ticks their own row. A single unverified member can invalidate the team's entry.
+Confirmations are collected in
+**[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** - transcribe
+them here as they arrive, so the record lives in the repository and not only in a thread.
 
 | Item | M1 | M2 | M3 | M4 |
 |---|---|---|---|---|

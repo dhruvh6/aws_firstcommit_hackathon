@@ -8,18 +8,26 @@ same file.**
 
 ## 1. Roster
 
-Fill this in on Day 1 and commit it. One line each, no contact details in the repository -
-coordination happens in the team channel, not in Git.
+Slots M1-M3 are claimed in **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)**,
+which also collects each member's eligibility confirmation and a confirmation that
+`npm i && npm run dev` works on their machine. Update this table as claims come in and
+commit it. No contact details in the repository - GitHub handles only; coordination happens
+in the team channel, not in Git.
 
 | Slot | Name | GitHub handle | Role | Primary directories |
 |---|---|---|---|---|
-| **M1** | _____ | `@_____` | Frontend / Product | `web/`, `shared/src/labels.ts` |
-| **M2** | _____ | `@_____` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
-| **M3** | _____ | `@_____` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
-| **M4** | _____ | `@_____` | Integration / QA / Docs + contract gatekeeper | `docs/`, `fixtures/`, `scripts/`, `api/test/`, `README.md` |
+| **M1** | _unclaimed_ | `@_____` | Frontend / Product | `web/`, `shared/src/labels.ts` |
+| **M2** | _unclaimed_ | `@_____` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
+| **M3** | _unclaimed_ | `@_____` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
+| **M4** | - | `@dhruvh6` | Integration / QA / Docs + contract gatekeeper | `docs/`, `fixtures/`, `scripts/`, `api/test/`, `README.md` |
 
-**Whoever wrote these specifications should take M4.** They already hold the contract in
+**M4 is taken by whoever wrote these specifications.** They already hold the contract in
 their head, and M4 is the role that arbitrates it.
+
+Two considerations that outrank preference when assigning the rest: **M3 is the
+highest-risk slot** - no live URL means no Ship It submission - so it goes to whoever has
+already deployed something; and **M2 is the least forgiving** - quantity arithmetic under
+concurrency - so it goes to the strongest backend person rather than whoever is free.
 
 Everyone must be able to explain the whole project - roles divide *work*, not understanding.
 A judge may ask any member anything, and "that was someone else's part" is a bad answer in a
@@ -295,6 +303,11 @@ like a dependency is a contract question - ask M4, do not wait.
 ## 10. If a member goes dark
 
 Online hackathon, patchy internet, real life. Plan for it instead of panicking.
+
+**Status as of Day 1:** a working AWS account is confirmed available (M4's account; M3 gets
+an IAM user on it, with a budget alert set before any resource is created). **Ship It is
+therefore the track**, and the Build It fallback below is a contingency only - not a plan,
+and not a consolation prize.
 
 | Missing | Immediate effect | Recovery |
 |---|---|---|
