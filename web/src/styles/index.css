@@ -1,2 +1,15 @@
 @import 'tailwindcss';
 @import './tokens.css';
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    color: var(--ink-900);
+    background: var(--ink-100);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
