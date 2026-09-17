@@ -8,17 +8,18 @@ same file.**
 
 ## 1. Roster
 
-Slots M1-M3 are claimed in **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)**,
-which also collects each member's eligibility confirmation and a confirmation that
-`npm i && npm run dev` works on their machine. Update this table as claims come in and
-commit it. No contact details in the repository - GitHub handles only; coordination happens
+Slots were assigned on Day 1, 17 September. GitHub handles are still to be filled in -
+**each member needs collaborator access to push a branch**, since `main` requires a pull
+request. Eligibility confirmations are collected in
+**[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** and
+transcribed into [10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 1 as they arrive. No contact details in the repository - GitHub handles only; coordination happens
 in the team channel, not in Git.
 
 | Slot | Name | GitHub handle | Role | Primary directories |
 |---|---|---|---|---|
-| **M1** | _unclaimed_ | `@_____` | Frontend / Product | `web/`, `shared/src/labels.ts` |
-| **M2** | _unclaimed_ | `@_____` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
-| **M3** | _unclaimed_ | `@_____` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
+| **M1** | Vedika | `@_____` | Frontend / Product | `web/`, `shared/src/labels.ts` |
+| **M2** | Prakriti | `@_____` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
+| **M3** | Siddhi | `@_____` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
 | **M4** | - | `@dhruvh6` | Integration / QA / Docs + contract gatekeeper | `docs/`, `fixtures/`, `scripts/`, `api/test/`, `README.md` |
 
 **M4 is taken by whoever wrote these specifications.** They already hold the contract in
@@ -86,7 +87,7 @@ After this hour, communication drops to the four daily checkpoints in
 
 ---
 
-## 5. M1 - Frontend / Product
+## 5. M1 - Frontend / Product  (Vedika)
 
 **Owns:** every pixel. **Unblocked by:** MSW mocks + fixtures. **Never touches:** `api/`, `infra/`.
 
@@ -135,7 +136,7 @@ frozen contract, building a validated chart palette instead of picking colours.
 
 ---
 
-## 6. M2 - Backend / Domain logic
+## 6. M2 - Backend / Domain logic  (Prakriti)
 
 **Owns:** correctness. **Unblocked by:** the in-memory repo. **Never touches:** `web/`, `infra/`, `repo/dynamo.ts`.
 
@@ -189,7 +190,7 @@ domain logic pure and I/O at the edges, designing explainable rules instead of a
 
 ---
 
-## 7. M3 - AWS / Infrastructure
+## 7. M3 - AWS / Infrastructure  (Siddhi)
 
 **Owns:** the live URL. **Unblocked by:** the `Repo` interface. **Never touches:** `web/src/`, `api/src/domain/`, `api/src/handlers/`.
 
