@@ -27,6 +27,39 @@ them here as they arrive, so the record lives in the repository and not only in 
 One tour registration covers the six tour stops, but each hackathon needs its own check-in.
 M4 confirms all four rows are complete at CP1 and says so in the channel.
 
+### How to check in - each person does their own
+
+Verified against the official pages on 17 September 2026.
+
+| # | Step | Where |
+|---|---|---|
+| 1 | **AWS Builder Center profile.** "Free, no credit card, two minutes to sign up" | builder.aws.com |
+| 2 | **Verify your student status.** Required to compete, not just to register | `bit.ly/abc-verify`, linked from the event page |
+| 3 | **Register for the Bharat Builds Tour.** One registration covers all six stops | `wemakedevs.org/aws` |
+| 4 | **Check in to First Commit itself** - the **"Check in"** button on the event page. This is the step that "enters you in the hackathon online" and is *separate* from tour registration | `wemakedevs.org/aws/first-commit` |
+
+The rules are explicit that this cannot be delegated: *"Every member registers for the tour
+with their own account. A captain cannot register the rest of the team."*
+
+**Optional in-person day:** Saturday 19 September, 8 AM - 8 PM, Polaris School of
+Technology, Bengaluru. Separate signup at `luma.com/first-commit`; limited seats, confirmed
+by email. It does **not** add to the judging score - treat it as mentor access and
+workshops, not as points.
+
+### The deadline time is not published yet
+
+As of 17 September the schedule page says: *"The hours are being finalised: the kickoff
+call, mentor sessions, and the deadline the clock stops on. They land on this page first,
+and everyone registered is told the same day."*
+
+So the CP9 target of Sunday 20:00 in [09-INTEGRATION-PLAN.md](09-INTEGRATION-PLAN.md) § 2 is
+**our own target, not the official cutoff**. Two consequences:
+
+1. M4 checks `wemakedevs.org/aws/first-commit/schedule` once a day and posts any change.
+2. Submit something valid **early** and refine it. The rules allow editing a submission up
+   to the deadline but not after it, so a valid submission on Saturday night beats aiming at
+   an unknown Sunday time.
+
 ## 2. Submission - three artefacts
 
 | # | Artefact | Owner | Required content |
