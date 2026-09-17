@@ -39,3 +39,6 @@ coverage/
 # local scratch
 scratch/
 tmp/
+
+# committed, contains no secrets - loaded by `npm run dev:web:mock`
+!web/.env.mock

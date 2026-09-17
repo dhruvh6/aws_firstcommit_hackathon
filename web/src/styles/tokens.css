@@ -1,0 +1,19 @@
+/*
+ * Design tokens.
+ *
+ * OWNER: M1  (docs/08-TEAM-ROLES.md § 3)
+ * SOURCE: docs/07-DESIGN-SYSTEM.md § 1 - copy the whole :root block verbatim.
+ *         Every contrast ratio in that document was measured; do not substitute
+ *         colours by eye.
+ *
+ * Rules:
+ *   - Components reference tokens by role. No hex literals in component files.
+ *   - Amber (--accent-500) is only ever the primary action.
+ *   - --ink-500 is placeholders and disabled labels, never body text.
+ *   - Light mode only; do not add prefers-color-scheme rules (docs/07 § 1).
+ */
+
+:root {
+  color-scheme: light;
+  /* TODO M1: paste docs/07-DESIGN-SYSTEM.md § 1 here on Day 1. */
+}

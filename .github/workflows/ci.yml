@@ -1,0 +1,26 @@
+# CI. OWNER: M4 (docs/09-INTEGRATION-PLAN.md § 6).
+# Keep it under three minutes or people start ignoring it.
+# No deploy step: Amplify handles the frontend, and M3 deploys the backend
+# deliberately - an automated backend deploy on a red afternoon is how a working
+# demo becomes a broken one.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
