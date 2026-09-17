@@ -8,18 +8,19 @@ same file.**
 
 ## 1. Roster
 
-Slots were assigned on Day 1, 17 September. GitHub handles are still to be filled in -
-**each member needs collaborator access to push a branch**, since `main` requires a pull
-request. Eligibility confirmations are collected in
+Slots were assigned on Day 1, 17 September. All four members have push access to the
+repository; `main` is protected, so everyone - including M4 - works on a branch and merges
+through a pull request with green CI. Eligibility confirmations are collected in
 **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** and
-transcribed into [10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 1 as they arrive. No contact details in the repository - GitHub handles only; coordination happens
+transcribed into [10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 1 as they arrive -
+**this is the one open item that can still invalidate the team's entry.** No contact details in the repository - GitHub handles only; coordination happens
 in the team channel, not in Git.
 
 | Slot | Name | GitHub handle | Role | Primary directories |
 |---|---|---|---|---|
-| **M1** | Vedika | `@_____` | Frontend / Product | `web/`, `shared/src/labels.ts` |
-| **M2** | Prakriti | `@_____` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
-| **M3** | Siddhi | `@_____` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
+| **M1** | Vedika | `@vedipanj115` | Frontend / Product | `web/`, `shared/src/labels.ts` |
+| **M2** | Prakriti | `@PrakritiGhanekar` | Backend / Domain logic | `api/` (except `repo/dynamo.ts`), `shared/src/domain.ts`, `shared/src/api.ts` |
+| **M3** | Siddhi | `@Siddhi-S-Thakur` | AWS / Infrastructure | `infra/`, `api/src/repo/dynamo.ts`, Amplify + deploy config |
 | **M4** | - | `@dhruvh6` | Integration / QA / Docs + contract gatekeeper | `docs/`, `fixtures/`, `scripts/`, `api/test/`, `README.md` |
 
 **M4 is taken by whoever wrote these specifications.** They already hold the contract in
