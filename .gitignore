@@ -1,0 +1,41 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# build output
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# env & secrets  (see docs/05-ARCHITECTURE.md § Secrets)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+aws-exports.js
+.aws-sam/
+cdk.out/
+samconfig.toml
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+Thumbs.db
+
+# test / coverage
+coverage/
+.nyc_output/
+
+# local scratch
+scratch/
+tmp/
