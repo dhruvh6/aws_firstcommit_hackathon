@@ -1,0 +1,85 @@
+{
+  "items": [
+    {
+      "code": "WOOD_OFFCUTS",
+      "label": "Wood & plywood offcuts",
+      "canonicalUnit": "KG",
+      "allowedUnits": ["KG"],
+      "icon": "wood",
+      "attributeFields": [
+        { "key": "minPieceSizeCm", "label": "Smallest piece size (cm)", "type": "number",  "required": true,  "min": 1, "max": 500 },
+        { "key": "maxPieceSizeCm", "label": "Largest piece size (cm)",  "type": "number",  "required": true,  "min": 1, "max": 500 },
+        { "key": "treated",        "label": "Chemically treated",       "type": "boolean", "required": true },
+        { "key": "woodType",       "label": "Wood type",                "type": "text",    "required": false, "maxLength": 40 }
+      ],
+      "constraintFields": [
+        { "key": "minPieceSizeCm", "label": "Minimum usable piece size (cm)", "type": "number",  "required": false, "min": 1, "max": 500, "helper": "Pieces smaller than this are no use to us. Leave blank if you don't mind." },
+        { "key": "allowTreated",   "label": "Accept treated material",        "type": "boolean", "required": false, "helper": "Leave blank if you don't mind." },
+        { "key": "woodType",       "label": "Required wood type",             "type": "text",    "required": false, "maxLength": 40, "helper": "Leave blank if you don't mind." }
+      ]
+    },
+    {
+      "code": "FABRIC_OFFCUTS",
+      "label": "Fabric offcuts & rolls",
+      "canonicalUnit": "KG",
+      "allowedUnits": ["KG", "METRES"],
+      "icon": "fabric",
+      "attributeFields": [
+        { "key": "minPieceLengthCm", "label": "Shortest piece length (cm)", "type": "number", "required": true,  "min": 1, "max": 2000 },
+        { "key": "maxPieceLengthCm", "label": "Longest piece length (cm)",  "type": "number", "required": true,  "min": 1, "max": 2000 },
+        { "key": "fabricType",       "label": "Fabric type",                "type": "text",   "required": false, "maxLength": 40 },
+        { "key": "gsm",              "label": "Weight (gsm)",               "type": "number", "required": false, "min": 20, "max": 1000 }
+      ],
+      "constraintFields": [
+        { "key": "minPieceLengthCm", "label": "Minimum usable length (cm)", "type": "number", "required": false, "min": 1, "max": 2000, "helper": "Leave blank if you don't mind." },
+        { "key": "fabricType",       "label": "Required fabric type",       "type": "text",   "required": false, "maxLength": 40, "helper": "Leave blank if you don't mind." },
+        { "key": "minGsm",           "label": "Minimum weight (gsm)",       "type": "number", "required": false, "min": 20, "max": 1000, "helper": "Listings without a stated gsm will not match if you set this." },
+        { "key": "maxGsm",           "label": "Maximum weight (gsm)",       "type": "number", "required": false, "min": 20, "max": 1000 }
+      ]
+    },
+    {
+      "code": "PACKAGING_CARDBOARD",
+      "label": "Packaging & cardboard",
+      "canonicalUnit": "UNITS",
+      "allowedUnits": ["UNITS", "KG"],
+      "icon": "packaging",
+      "attributeFields": [
+        { "key": "ply",              "label": "Ply",                         "type": "number",  "required": false, "min": 1, "max": 12 },
+        { "key": "printed",          "label": "Printed",                     "type": "boolean", "required": true },
+        { "key": "flatDimensionsCm", "label": "Flat dimensions (l x w x h cm)", "type": "text", "required": false, "maxLength": 40 }
+      ],
+      "constraintFields": [
+        { "key": "minPly",       "label": "Minimum ply",           "type": "number",  "required": false, "min": 1, "max": 12, "helper": "Listings without a stated ply will not match if you set this." },
+        { "key": "allowPrinted", "label": "Accept printed stock",  "type": "boolean", "required": false, "helper": "Leave blank if you don't mind." }
+      ]
+    },
+    {
+      "code": "ACRYLIC_SHEET",
+      "label": "Acrylic & plastic sheet",
+      "canonicalUnit": "SHEETS",
+      "allowedUnits": ["SHEETS", "KG"],
+      "icon": "acrylic",
+      "attributeFields": [
+        { "key": "thicknessMm",    "label": "Thickness (mm)",           "type": "number", "required": true,  "min": 1, "max": 50 },
+        { "key": "minSheetSizeCm", "label": "Smallest sheet side (cm)", "type": "number", "required": true,  "min": 1, "max": 300 },
+        { "key": "maxSheetSizeCm", "label": "Largest sheet side (cm)",  "type": "number", "required": true,  "min": 1, "max": 300 },
+        { "key": "colour",         "label": "Colour",                   "type": "text",   "required": false, "maxLength": 30 }
+      ],
+      "constraintFields": [
+        { "key": "minThicknessMm", "label": "Minimum thickness (mm)",    "type": "number", "required": false, "min": 1, "max": 50, "helper": "Leave blank if you don't mind." },
+        { "key": "maxThicknessMm", "label": "Maximum thickness (mm)",    "type": "number", "required": false, "min": 1, "max": 50 },
+        { "key": "minSheetSizeCm", "label": "Minimum usable side (cm)",  "type": "number", "required": false, "min": 1, "max": 300, "helper": "Leave blank if you don't mind." },
+        { "key": "colour",         "label": "Required colour",           "type": "text",   "required": false, "maxLength": 30, "helper": "Leave blank if you don't mind." }
+      ]
+    }
+  ],
+  "enumLabels": {
+    "condition":         { "UNUSED": "Unused", "CLEAN_USABLE": "Clean, usable", "MIXED": "Mixed", "NEEDS_SORTING": "Needs sorting" },
+    "unit":              { "KG": "kg", "UNITS": "units", "SHEETS": "sheets", "METRES": "m" },
+    "handoffMode":       { "PICKUP": "Buyer collects", "DROP_OFF": "Supplier delivers", "EITHER": "Either" },
+    "listingStatus":     { "ACTIVE": "Available", "PARTIALLY_RESERVED": "Partly reserved", "FULLY_RESERVED": "Fully reserved", "COMPLETED": "Completed", "EXPIRED": "Expired", "WITHDRAWN": "Withdrawn" },
+    "requirementStatus": { "OPEN": "Open", "PARTIALLY_FULFILLED": "Partly fulfilled", "FULFILLED": "Fulfilled", "EXPIRED": "Expired", "CANCELLED": "Cancelled" },
+    "reservationStatus": { "RESERVED": "Reserved", "HANDED_OFF": "Handed off", "CANCELLED": "Cancelled", "EXPIRED": "Expired" },
+    "matchCheck":        { "CATEGORY_COMPATIBLE": "Material category", "QUANTITY_AVAILABLE": "Quantity", "ATTRIBUTES_SATISFIED": "Dimensions & grade", "CONDITION_ACCEPTED": "Condition", "AVAILABILITY_WINDOW": "Availability", "WITHIN_SERVICE_AREA": "Distance" }
+  }
+}

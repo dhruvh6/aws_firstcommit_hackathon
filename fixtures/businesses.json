@@ -1,0 +1,8 @@
+[
+  { "businessId": "biz_001", "name": "Furniture Workshop A",        "businessType": "Furniture manufacturing",      "area": "Andheri East", "city": "Mumbai",      "location": { "lat": 19.1197, "lon": 72.8468 }, "createdAt": "2026-09-17T04:00:00.000Z" },
+  { "businessId": "biz_002", "name": "Decor & Packaging Business B", "businessType": "Decor products & packaging",   "area": "Bandra West",  "city": "Mumbai",      "location": { "lat": 19.0596, "lon": 72.8295 }, "createdAt": "2026-09-17T04:00:00.000Z" },
+  { "businessId": "biz_003", "name": "Prakash Garment Unit",         "businessType": "Garment manufacturing",        "area": "Dadar",        "city": "Mumbai",      "location": { "lat": 19.0176, "lon": 72.8562 }, "createdAt": "2026-09-17T04:00:00.000Z" },
+  { "businessId": "biz_004", "name": "Vega Acrylic Signage",         "businessType": "Signage & acrylic fabrication","area": "Kurla",        "city": "Mumbai",      "location": { "lat": 19.0726, "lon": 72.8845 }, "createdAt": "2026-09-17T04:00:00.000Z" },
+  { "businessId": "biz_005", "name": "Sunrise Print & Pack",         "businessType": "Printing & packaging",         "area": "Goregaon",     "city": "Mumbai",      "location": { "lat": 19.1663, "lon": 72.8526 }, "createdAt": "2026-09-17T04:00:00.000Z" },
+  { "businessId": "biz_006", "name": "Coastal Wood Traders",         "businessType": "Timber trading",               "area": "Vashi",        "city": "Navi Mumbai", "location": { "lat": 19.0770, "lon": 73.0169 }, "createdAt": "2026-09-17T04:00:00.000Z" }
+]

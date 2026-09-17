@@ -1,0 +1,79 @@
+{
+  "_comment": "Test oracle for docs/03-MATCHING-SPEC.md § 8. Computed from the frozen ranking formula with today = 2026-09-17. M2 asserts these in unit tests; M4 asserts them against the deployed API. If code and this file disagree, check the formula before changing the file.",
+  "req_001": {
+    "today": "2026-09-17",
+    "remainingRequirement": 50,
+    "includeNearMisses": true,
+    "meta": { "count": 3, "compatibleCount": 1, "nearMissCount": 2, "truncated": false },
+    "order": ["lst_001", "lst_006", "lst_005"],
+    "notReturned": {
+      "lst_002": "C1 gate: PACKAGING_CARDBOARD != WOOD_OFFCUTS",
+      "lst_003": "C1 gate: FABRIC_OFFCUTS != WOOD_OFFCUTS",
+      "lst_004": "C1 gate: ACRYLIC_SHEET != WOOD_OFFCUTS"
+    },
+    "items": [
+      {
+        "listingId": "lst_001",
+        "compatible": true,
+        "compatibleQuantity": 50,
+        "distanceKm": 6.9,
+        "scoreParts": { "coverage": 1, "proximity": 0.54, "quality": 0.6667, "urgency": 0.7857 },
+        "score": 0.7739,
+        "checks": [
+          { "code": "CATEGORY_COMPATIBLE",  "passed": true },
+          { "code": "QUANTITY_AVAILABLE",   "passed": true },
+          { "code": "ATTRIBUTES_SATISFIED", "passed": true },
+          { "code": "CONDITION_ACCEPTED",   "passed": true },
+          { "code": "AVAILABILITY_WINDOW",  "passed": true },
+          { "code": "WITHIN_SERVICE_AREA",  "passed": true }
+        ]
+      },
+      {
+        "listingId": "lst_006",
+        "compatible": false,
+        "compatibleQuantity": 50,
+        "distanceKm": 19.8,
+        "scoreParts": { "coverage": 1, "proximity": 0, "quality": 0.6667, "urgency": 0.4286 },
+        "score": 0.5762,
+        "checks": [
+          { "code": "CATEGORY_COMPATIBLE",  "passed": true },
+          { "code": "QUANTITY_AVAILABLE",   "passed": true },
+          { "code": "ATTRIBUTES_SATISFIED", "passed": true },
+          { "code": "CONDITION_ACCEPTED",   "passed": true },
+          { "code": "AVAILABILITY_WINDOW",  "passed": true },
+          { "code": "WITHIN_SERVICE_AREA",  "passed": false, "detail": "19.8 km away, outside your 15 km radius" }
+        ]
+      },
+      {
+        "listingId": "lst_005",
+        "compatible": false,
+        "compatibleQuantity": 25,
+        "distanceKm": 6.9,
+        "scoreParts": { "coverage": 0.5, "proximity": 0.54, "quality": 0.3333, "urgency": 0.7857 },
+        "score": 0.5072,
+        "checks": [
+          { "code": "CATEGORY_COMPATIBLE",  "passed": true },
+          { "code": "QUANTITY_AVAILABLE",   "passed": true },
+          { "code": "ATTRIBUTES_SATISFIED", "passed": false, "detail": "Smallest piece 5 cm is below your 10 cm minimum; material is treated" },
+          { "code": "CONDITION_ACCEPTED",   "passed": false, "detail": "Condition \"Mixed\" is not in your accepted list" },
+          { "code": "AVAILABILITY_WINDOW",  "passed": true },
+          { "code": "WITHIN_SERVICE_AREA",  "passed": true }
+        ]
+      }
+    ]
+  },
+  "afterReserving50OfLst001": {
+    "lst_001": { "availableQuantity": 30, "reservedQuantity": 50, "handedOffQuantity": 0, "status": "PARTIALLY_RESERVED" },
+    "req_001": { "reservedQuantity": 50, "fulfilledQuantity": 0, "status": "PARTIALLY_FULFILLED" },
+    "rematch": { "compatibleCount": 0, "note": "remainingRequirement is 0, so C2 fails for every listing; the UI shows the 'requirement fully covered' state" }
+  },
+  "afterHandoff": {
+    "lst_001": { "availableQuantity": 30, "reservedQuantity": 0, "handedOffQuantity": 50, "status": "PARTIALLY_RESERVED" },
+    "req_001": { "reservedQuantity": 0, "fulfilledQuantity": 50, "status": "FULFILLED" },
+    "impact": { "completedExchanges": 1, "quantityReusedByUnit": { "KG": 50 }, "estimatedProcurementAvoidedInr": 1400, "sourceRecordCount": 1 }
+  },
+  "concurrency": {
+    "scenario": "Two simultaneous POST /v1/reservations of 50 kg against lst_001 (80 kg available)",
+    "expected": "Exactly one 201. The other 409 INSUFFICIENT_QUANTITY with details.availableQuantity = 30. lst_001.availableQuantity is 30, never negative."
+  }
+}
