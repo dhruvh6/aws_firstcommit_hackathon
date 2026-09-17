@@ -33,3 +33,44 @@ Not worth recording: "fixed a typo", "styled the button", anything you already k
   durable copy is the one that must be durable.
 - Trade-off: no match history for analytics - acceptable, since reservations carry the
   reasons that actually mattered.
+
+## 2026-09-17 - M4 (history correction)
+
+**What commit `141eebe` actually contains.** Its message reads *"docs: record M4,
+point slot claims and eligibility at issue #1, confirm Ship It"*, but the commit
+also introduced `shared/src/domain.ts` (294 lines) and `shared/src/api.ts` (502
+lines) - the full transcription of the frozen docs/02 and docs/04. Those files
+were produced in a parallel session, were sitting uncommitted in the working
+tree, and were swept in by a `git add -A`. The message does not mention them.
+
+- Learned: `git add -A` commits whatever is in the tree, not what you worked on.
+  On a shared repository whose history gets inspected, the commit message and the
+  diff have to agree.
+- Failed first: staging everything by habit rather than staging the files the
+  commit is about.
+- Changed: stage explicit paths. `main` is shared and already pushed, so the
+  history is not being rewritten - this note is the correction instead.
+- Trade-off: one commit in the log under-describes its diff. Recorded here rather
+  than force-pushed, because rewriting shared history is worse than an inaccurate
+  message, and docs/09 § 1 forbids it.
+
+Both files were reviewed after the fact against the frozen specs: all seven
+enums, all eight entity interfaces, the six match-check codes in documented
+order, and every error code in docs/04 § 4 are present and faithful.
+
+## 2026-09-18 - M4
+
+- Learned: a self-referential CSS custom property (`--radius-md: var(--radius-md)`)
+  is invalid at computed-value time, so it fails **silently** - no build error, no
+  console warning, green CI, and every `rounded-*`, `shadow-*` and `font-sans`
+  utility quietly resolving to nothing.
+- Failed first: reviewing the token file by reading it. The cycle is invisible in
+  the source, because the two colliding declarations live in different blocks.
+- Changed: reviewed the **built** CSS instead, where both declarations appear in
+  the same `:root` and the self-reference wins. Tailwind's theme keys for the
+  radius, shadow and font namespaces collide with the design system's own token
+  names; colours do not, because they are prefixed `--color-*`.
+- Trade-off: those three namespaces now have their literal values in `@theme`
+  rather than in the `:root` block, so tokens.css has two sources of truth by
+  namespace instead of one. `@theme static` keeps them emitted even when no
+  utility references them yet.
