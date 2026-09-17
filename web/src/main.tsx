@@ -9,11 +9,10 @@ const queryClient = new QueryClient({
 });
 
 async function start(): Promise<void> {
-  // M1: when mocks land, start MSW here before rendering.
-  //   if (import.meta.env.VITE_USE_MOCKS === 'true') {
-  //     const { worker } = await import('./mocks/browser.js');
-  //     await worker.start({ onUnhandledRequest: 'warn' });
-  //   }
+  if (import.meta.env.VITE_USE_MOCKS === 'true') {
+    const { worker } = await import('./mocks/browser.js');
+    await worker.start({ onUnhandledRequest: 'warn' });
+  }
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
