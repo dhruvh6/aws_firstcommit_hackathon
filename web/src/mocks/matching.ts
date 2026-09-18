@@ -39,10 +39,15 @@ function fmtQty(n: number): string {
   return String(round2(n));
 }
 
+// `Intl.DateTimeFormat('en-GB', { month: 'short' })` renders September as
+// "Sept", not "Sep" - it would desync mock detail strings from the real API's
+// output. This literal array matches api/src/domain/matching.ts:43 exactly,
+// which is what makes the two byte-identical (docs/03-MATCHING-SPEC.md § 7).
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 function shortDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
-    new Date(`${iso}T00:00:00.000Z`),
-  );
+  const date = new Date(`${iso}T00:00:00.000Z`);
+  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]}`;
 }
 
 function daysBetween(fromIso: string, toIso: string): number {
