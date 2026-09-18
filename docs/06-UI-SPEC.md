@@ -392,8 +392,12 @@ The most important screen in the product. It must be legible in a three-minute v
 4. `score` is never displayed. No percentage, no "94% match", no stars.
 5. Near-misses are collapsed by default under a count, expandable, visually de-emphasised
    (grey border, no photo emphasis) - present but never competing with the real match.
-6. Each near-miss offers the single most useful relaxation as a button, which edits the
-   requirement and refetches.
+6. Each near-miss should point at the most useful next action. **Corrected 18 September:**
+   this originally said the button "edits the requirement and refetches", which the API
+   cannot do - `/v1/requirements` supports POST and GET only, and no update endpoint was
+   ever specified or cut. The implementable form is a link to S5 prefilled with the relaxed
+   constraint, which needs no new endpoint. The empty state's "Post a different
+   requirement" action already covers the common case; prefilling is optional polish.
 
 **States**: skeleton of one large card plus two small ones; empty
 `No compatible surplus right now` with `Widen radius`, `Relax condition`, `Browse all wood
