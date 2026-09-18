@@ -44,6 +44,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { FIXTURE_EPOCH, addDays, daysBetween, isIsoDate, shiftOffset, shifterFor, today as todayIso } from './lib/dates.mjs';
 
 // ── types (structural, deliberately loose - fixtures are data, not contract) ──
 interface Business { businessId: string; name: string; area: string; city: string }
@@ -60,16 +61,12 @@ interface Requirement {
 }
 
 // ── configuration ────────────────────────────────────────────────────────────
-/** The date every fixture literal is written relative to. */
-const FIXTURE_EPOCH = '2026-09-17';
 /** Created live on camera - see the header note. */
 const STAR_LISTING = 'lst_001';
 const STAR_REQUIREMENT = 'req_001';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, '..', 'fixtures');
-
-const DAY_MS = 86_400_000;
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
@@ -88,29 +85,15 @@ const API = (option('api') ?? process.env.API_BASE_URL ?? 'http://localhost:3001
 const DRY_RUN = flag('dry-run');
 const VERBOSE = flag('verbose');
 const INCLUDE_STAR = flag('include-star');
-const TODAY = option('today') ?? isoDate(new Date());
+const TODAY = option('today') ?? todayIso();
 
-if (!/^\d{4}-\d{2}-\d{2}$/.test(TODAY)) {
+if (!isIsoDate(TODAY)) {
   fail(`--today must be an ISO date (YYYY-MM-DD), got "${TODAY}"`);
 }
 
-// ── date shifting ────────────────────────────────────────────────────────────
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-/** Whole days between two ISO dates, b - a. UTC-anchored, so DST cannot skew it. */
-function daysBetween(a: string, b: string): number {
-  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY_MS);
-}
-
-function addDays(date: string, days: number): string {
-  return isoDate(new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS));
-}
-
-/** Offset of the run date from the fixture epoch. Every date moves by this. */
-const SHIFT = daysBetween(FIXTURE_EPOCH, TODAY);
-const shift = (date: string): string => addDays(date, SHIFT);
+// ── date shifting (shared with seed-dynamo, see scripts/lib/dates.mts) ───────
+const SHIFT = shiftOffset(TODAY);
+const shift = shifterFor(TODAY);
 
 // ── HTTP ─────────────────────────────────────────────────────────────────────
 /** The error envelope every non-2xx response carries (docs/04 § 1). */
