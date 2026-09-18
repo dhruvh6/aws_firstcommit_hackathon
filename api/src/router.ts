@@ -6,6 +6,18 @@
  * OWNER: M2  (docs/08-TEAM-ROLES.md § 3)
  * ROUTES: docs/04-API-CONTRACT.md § 2 - all 19 of them. FROZEN.
  */
+import type { ApiErrorCode } from '@dse/shared';
+import { ApiRequestError } from './errors.js';
+import { getBusiness, listBusinesses } from './handlers/businesses.js';
+import { createListing, getListing, listListings } from './handlers/listings.js';
+import { getListingMatches, getRequirementMatches } from './handlers/matches.js';
+import { getCategories } from './handlers/meta.js';
+import {
+  createRequirement,
+  getRequirement,
+  listRequirements,
+} from './handlers/requirements.js';
+import { EntityNotFoundError, InvalidCursorError } from './repo/index.js';
 
 export interface RouterRequest {
   method: string;
@@ -37,7 +49,7 @@ interface Route {
 /** Error envelope from docs/04 § 1. Codes are limited to the § 4 table. */
 export function apiError(
   status: number,
-  code: string,
+  code: ApiErrorCode,
   message: string,
   extra?: { field?: string; details?: Record<string, unknown> },
 ): RouterResponse {
@@ -76,19 +88,23 @@ const routes: Route[] = [
       },
     }),
   },
-  // GET    /v1/meta/categories                        -> handlers/meta.ts
-  // GET    /v1/businesses                             -> handlers/businesses.ts
-  // GET    /v1/businesses/:businessId
-  // POST   /v1/listings                               -> handlers/listings.ts
-  // GET    /v1/listings
-  // GET    /v1/listings/:listingId
+  { method: 'GET', template: '/v1/meta/categories', handler: getCategories },
+  { method: 'GET', template: '/v1/businesses', handler: listBusinesses },
+  { method: 'GET', template: '/v1/businesses/:businessId', handler: getBusiness },
+  { method: 'POST', template: '/v1/listings', handler: createListing },
+  { method: 'GET', template: '/v1/listings', handler: listListings },
+  { method: 'GET', template: '/v1/listings/:listingId/matches', handler: getListingMatches },
+  { method: 'GET', template: '/v1/listings/:listingId', handler: getListing },
   // POST   /v1/listings/:listingId/withdraw
-  // GET    /v1/listings/:listingId/matches
-  // POST   /v1/requirements                           -> handlers/requirements.ts
-  // GET    /v1/requirements
-  // GET    /v1/requirements/:requirementId
+  { method: 'POST', template: '/v1/requirements', handler: createRequirement },
+  { method: 'GET', template: '/v1/requirements', handler: listRequirements },
+  {
+    method: 'GET',
+    template: '/v1/requirements/:requirementId/matches',
+    handler: getRequirementMatches,
+  },
+  { method: 'GET', template: '/v1/requirements/:requirementId', handler: getRequirement },
   // POST   /v1/requirements/:requirementId/cancel
-  // GET    /v1/requirements/:requirementId/matches
   // POST   /v1/reservations                           -> handlers/reservations.ts
   // GET    /v1/reservations
   // GET    /v1/reservations/:reservationId
@@ -120,8 +136,24 @@ export async function handle(req: RouterRequest): Promise<RouterResponse> {
     try {
       return await route.handler(req, params);
     } catch (err) {
-      // M2: map domain errors (InsufficientQuantityError, InvalidStateError, …)
-      // to their codes from docs/04 § 4 before this catch-all.
+      if (err instanceof ApiRequestError) {
+        return apiError(err.status, err.code, err.message, {
+          field: err.field ?? undefined,
+          details: err.details ?? undefined,
+        });
+      }
+      if (err instanceof InvalidCursorError) {
+        return apiError(400, 'VALIDATION_FAILED', 'cursor is invalid.', { field: 'cursor' });
+      }
+      if (err instanceof EntityNotFoundError) {
+        const codes = {
+          business: 'BUSINESS_NOT_FOUND',
+          listing: 'LISTING_NOT_FOUND',
+          requirement: 'REQUIREMENT_NOT_FOUND',
+          reservation: 'RESERVATION_NOT_FOUND',
+        } as const;
+        return apiError(404, codes[err.entity], err.message);
+      }
       console.error(JSON.stringify({ level: 'error', path: req.path, err: String(err) }));
       return apiError(500, 'INTERNAL_ERROR', 'Something went wrong. Please try again.');
     }
