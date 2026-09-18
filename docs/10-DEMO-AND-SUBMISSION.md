@@ -13,16 +13,24 @@ Confirmations are collected in
 **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** - transcribe
 them here as they arrive, so the record lives in the repository and not only in a thread.
 
-| Item | M1 | M2 | M3 | M4 |
+Confirmed verbally on 18 September, except the final check-in - see the note below.
+
+| Item | M1 Vedika | M2 Prakriti | M3 Siddhi | M4 |
 |---|---|---|---|---|
-| University student in India | ☐ | ☐ | ☐ | ☐ |
-| 18 or older | ☐ | ☐ | ☐ | ☐ |
-| Registered individually for the Bharat Builds Tour | ☐ | ☐ | ☐ | ☐ |
-| WeMakeDevs account | ☐ | ☐ | ☐ | ☐ |
-| AWS Builder Center profile | ☐ | ☐ | ☐ | ☐ |
-| Student status verified on Builder Center | ☐ | ☐ | ☐ | ☐ |
+| University student in India | ☑ | ☑ | ☑ | ☑ |
+| 18 or older | ☑ | ☑ | ☑ | ☑ |
+| Registered individually for the Bharat Builds Tour | ☑ | ☑ | ☑ | ☑ |
+| WeMakeDevs account | ☑ | ☑ | ☑ | ☑ |
+| AWS Builder Center profile | ☑ | ☑ | ☑ | ☑ |
+| Student status verified on Builder Center | ☑ | ☑ | ☑ | ☑ |
 | **Checked in to First Commit specifically** | ☐ | ☐ | ☐ | ☐ |
-| On no other team for this stop | ☐ | ☐ | ☐ | ☐ |
+| On no other team for this stop | ☑ | ☑ | ☑ | ☑ |
+
+> **The one row still open is the one that matters most.** Registering for the Bharat
+> Builds Tour is not the same as checking in to this hackathon: the check-in is a separate
+> button on `wemakedevs.org/aws/first-commit`, and the rules state that a tour registration
+> covers the six stops while each hackathon needs its own check-in. Confirm it per person -
+> "I registered" is not the same answer as "I checked in".
 
 One tour registration covers the six tour stops, but each hackathon needs its own check-in.
 M4 confirms all four rows are complete at CP1 and says so in the channel.
