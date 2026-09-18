@@ -47,4 +47,16 @@
       transform: translateY(0);
     }
   }
+
+  /* Dialog / drawer - docs/07-DESIGN-SYSTEM.md § 6 Motion: fade + 8px rise, 160ms. */
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
