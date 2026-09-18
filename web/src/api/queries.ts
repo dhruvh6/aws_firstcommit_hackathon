@@ -3,8 +3,14 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { MetaCategoriesResponse, RequirementMatchesResponse } from '@dse/shared';
-import { getMetaCategories, getRequirementMatches } from './client.js';
+import type {
+  ListingResponse,
+  MetaCategoriesResponse,
+  RequirementMatchesResponse,
+  ReservationsQuery,
+  ReservationsResponse,
+} from '@dse/shared';
+import { getListing, getMetaCategories, getRequirementMatches, getReservations } from './client.js';
 
 /**
  * GET /v1/meta/categories - static taxonomy, fetched once and cached for
@@ -34,5 +40,28 @@ export function useRequirementMatches(requirementId: string | undefined): UseQue
     queryKey: requirementMatchesKey(requirementId ?? ''),
     queryFn: () => getRequirementMatches(requirementId as string),
     enabled: Boolean(requirementId),
+  });
+}
+
+/**
+ * GET /v1/listings/{listingId} - S7's material block. Key is `['listings', listingId]`,
+ * matching the `['listings']` prefix ListingNewPage.tsx already invalidates on write.
+ */
+export function useListing(listingId: string | undefined): UseQueryResult<ListingResponse> {
+  return useQuery({
+    queryKey: ['listings', listingId ?? ''],
+    queryFn: () => getListing(listingId as string),
+    enabled: Boolean(listingId),
+  });
+}
+
+/**
+ * GET /v1/reservations - S9's fallback lookup (no per-id endpoint; docs/06 § 2
+ * cut-route rule) and S8's dashboard tables later.
+ */
+export function useReservations(query?: ReservationsQuery): UseQueryResult<ReservationsResponse> {
+  return useQuery({
+    queryKey: ['reservations', query ?? {}],
+    queryFn: () => getReservations(query),
   });
 }

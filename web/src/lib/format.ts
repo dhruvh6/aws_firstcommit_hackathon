@@ -27,3 +27,22 @@ function trimQuantity(value: number): string {
 export function formatQuantity(value: number, unit: string): string {
   return `${trimQuantity(value)} ${label('unit', unit) ?? unit}`;
 }
+
+/**
+ * ISO timestamp -> "14:30" in the viewer's local time zone, zero-padded.
+ * Unlike `formatDate` (a date-only string with no time-of-day, always read
+ * as UTC midnight), a timestamp has a real instant and must localize -
+ * a reservation expiring at 18:39 UTC is 23:39 to a viewer in IST.
+ */
+export function formatTime(iso: string): string {
+  const date = new Date(iso);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+/** ISO timestamp -> "20 Sep, 14:30", both parts in the viewer's local time zone. */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}, ${formatTime(iso)}`;
+}

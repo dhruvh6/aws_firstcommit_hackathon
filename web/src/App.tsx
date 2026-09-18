@@ -64,7 +64,7 @@ export function App(): React.JSX.Element {
           <Route path="/dashboard" element={withSuspense(<DashboardPage />)} />
           <Route path="/reservations/:id" element={withSuspense(<ReservationDetailPage />)} />
           <Route path="/impact" element={withSuspense(<ImpactPage />)} />
-          <Route path="/dev" element={withSuspense(<DevPreviewPage />)} />
+          {import.meta.env.DEV && <Route path="/dev" element={withSuspense(<DevPreviewPage />)} />}
           <Route path="*" element={withSuspense(<NotFoundPage />)} />
         </Route>
       </Routes>

@@ -23,8 +23,11 @@ export function CheckList({ checks }: CheckListProps): React.JSX.Element {
               <X className="h-4 w-4 text-danger-700" strokeWidth={2} aria-hidden="true" />
             )}
           </span>
-          {/* detail is server-rendered verbatim (docs/03 § 7) - never reworded, never truncated. */}
+          {/* detail is server-rendered verbatim (docs/03 § 7) - never reworded, never truncated.
+              The sr-only prefix gives screen readers the pass/fail state the icon alone
+              conveys visually; the glyph itself stays aria-hidden. */}
           <span className={`whitespace-normal text-[15px] leading-[22px] ${check.passed ? 'text-ok-700' : 'text-danger-700'}`}>
+            <span className="sr-only">{check.passed ? 'Passed: ' : 'Not met: '}</span>
             {check.detail}
           </span>
         </li>
