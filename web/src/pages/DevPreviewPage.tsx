@@ -15,6 +15,7 @@ import { Select } from '../components/Select.js';
 import { Skeleton } from '../components/Skeleton.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { ErrorState } from '../components/ErrorState.js';
+import { toast } from '../state/toast.js';
 import type { ChipVariant } from '../components/Chip.js';
 import type { SkeletonVariant } from '../components/Skeleton.js';
 import type { ButtonVariant, ButtonSize } from '../components/Button.js';
@@ -48,14 +49,16 @@ export function DevPreviewPage(): React.JSX.Element {
   const [category, setCategory] = useState('WOOD_OFFCUTS');
 
   return (
-    <main className="mx-auto flex max-w-[1000px] flex-col gap-10 px-6 py-10">
-      <header>
-        <h1 className="text-2xl font-bold text-ink-900">Component preview</h1>
+    <div className="mx-auto flex max-w-[1000px] flex-col gap-10 px-6 py-10">
+      <div>
+        <h1 tabIndex={-1} className="text-2xl font-bold text-ink-900">
+          Component preview
+        </h1>
         <p className="mt-1 text-[15px] text-ink-600">
           Every Day 1 shared component, every documented variant and state. Hover, active and
           focus-visible states are interactive - tab through or hover the controls below.
         </p>
-      </header>
+      </div>
 
       <Section title="Button">
         {BUTTON_VARIANTS.map((variant) => (
@@ -286,6 +289,20 @@ export function DevPreviewPage(): React.JSX.Element {
           </div>
         </Sub>
       </Section>
-    </main>
+
+      <Section title="Toast">
+        <Sub title="triggers (bottom-right, 4s auto-dismiss)">
+          <Button variant="secondary" onClick={() => toast.success('Reservation confirmed.')}>
+            Trigger success
+          </Button>
+          <Button variant="secondary" onClick={() => toast.error('Could not reach the exchange.')}>
+            Trigger error
+          </Button>
+          <Button variant="secondary" onClick={() => toast.info('Listing saved as a draft.')}>
+            Trigger info
+          </Button>
+        </Sub>
+      </Section>
+    </div>
   );
 }
