@@ -7,7 +7,7 @@
 import { label, statusChipVariant } from '@dse/shared';
 import { Chip } from './Chip.js';
 
-export type StatusChipKind = 'listingStatus' | 'requirementStatus' | 'reservationStatus';
+export type StatusChipKind = 'listingStatus' | 'requirementStatus' | 'reservationStatus' | 'condition';
 
 export interface StatusChipProps {
   kind: StatusChipKind;

@@ -17,8 +17,6 @@ import type {
   MatchCheck,
   MaterialAttributes,
   Requirement,
-  RequirementStatus,
-  SupplierMatch,
   SurplusListing,
   Unit,
 } from '@dse/shared';
@@ -330,7 +328,6 @@ export interface MatchSetResult<T> {
 }
 
 const OPEN_LISTING_STATUSES: ListingStatus[] = ['ACTIVE', 'PARTIALLY_RESERVED'];
-const OPEN_REQUIREMENT_STATUSES: RequirementStatus[] = ['OPEN', 'PARTIALLY_FULFILLED'];
 
 /** Buyer-side: GET /v1/requirements/{id}/matches (docs/04 § 3, the core endpoint). */
 export function findMatchesForRequirement(input: {
@@ -360,56 +357,6 @@ export function findMatchesForRequirement(input: {
   });
 
   const rankKey = (m: Match) => ({ score: m.score, distanceKm: m.distanceKm, availableUntil: m.listing.availableUntil, listingId: m.listingId });
-
-  const compatibleAll = evaluated.filter((x) => x.result.compatible).map(toMatch).sort((a, b) => rankSort(rankKey(a), rankKey(b)));
-  const nearMissAll = evaluated.filter((x) => !x.result.compatible).map(toMatch).sort((a, b) => rankSort(rankKey(a), rankKey(b)));
-
-  const compatible = compatibleAll.slice(0, input.limit);
-  const nearMisses = input.includeNearMisses ? nearMissAll.slice(0, NEAR_MISS_CAP) : [];
-  const truncated = compatibleAll.length > input.limit || (input.includeNearMisses && nearMissAll.length > NEAR_MISS_CAP);
-
-  return {
-    compatible,
-    nearMisses,
-    compatibleCountTotal: compatibleAll.length,
-    nearMissCountTotal: nearMissAll.length,
-    truncated,
-  };
-}
-
-/** Supplier-side: GET /v1/listings/{id}/matches (docs/03 § 9) - same six checks, roles swapped. */
-export function findMatchesForListing(input: {
-  listing: SurplusListing;
-  requirements: Requirement[];
-  today: string;
-  includeNearMisses: boolean;
-  limit: number;
-}): MatchSetResult<SupplierMatch> {
-  const candidates = input.requirements.filter(
-    (r) => r.businessId !== input.listing.businessId && OPEN_REQUIREMENT_STATUSES.includes(r.status),
-  );
-
-  const evaluated = candidates
-    .map((requirement) => ({ requirement, result: evaluateMatch(input.listing, requirement, input.today) }))
-    .filter((x): x is { requirement: Requirement; result: EvaluatedMatch } => x.result !== null);
-
-  const toMatch = (x: { requirement: Requirement; result: EvaluatedMatch }): SupplierMatch => ({
-    listingId: input.listing.listingId,
-    requirementId: x.requirement.requirementId,
-    compatibleQuantity: x.result.compatibleQuantity,
-    distanceKm: x.result.distanceKm,
-    score: x.result.score,
-    compatible: x.result.compatible,
-    checks: x.result.checks,
-    requirement: x.requirement,
-  });
-
-  const rankKey = (m: SupplierMatch) => ({
-    score: m.score,
-    distanceKm: m.distanceKm,
-    availableUntil: input.listing.availableUntil,
-    listingId: m.listingId,
-  });
 
   const compatibleAll = evaluated.filter((x) => x.result.compatible).map(toMatch).sort((a, b) => rankSort(rankKey(a), rankKey(b)));
   const nearMissAll = evaluated.filter((x) => !x.result.compatible).map(toMatch).sort((a, b) => rankSort(rankKey(a), rankKey(b)));

@@ -12,10 +12,6 @@ import type {
   ApiErrorCode,
   ApiErrorResponse,
   BusinessesResponse,
-  BusinessResponse,
-  CancelReservationRequest,
-  CancelReservationResponse,
-  CancelRequirementResponse,
   CreateListingRequest,
   CreateListingResponse,
   CreateRequirementRequest,
@@ -27,20 +23,14 @@ import type {
   HandoffResponse,
   ImpactQuery,
   ImpactResponse,
-  ListingMatchesResponse,
   ListingResponse,
   ListingsQuery,
   ListingsResponse,
   MatchesQuery,
   MetaCategoriesResponse,
   RequirementMatchesResponse,
-  RequirementResponse,
-  RequirementsQuery,
-  RequirementsResponse,
-  ReservationResponse,
   ReservationsQuery,
   ReservationsResponse,
-  WithdrawListingResponse,
 } from '@dse/shared';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:3001/v1';
@@ -173,10 +163,6 @@ export function getBusinesses(): Promise<BusinessesResponse> {
   return request({ method: 'GET', path: '/businesses' });
 }
 
-export function getBusiness(businessId: string): Promise<BusinessResponse> {
-  return request({ method: 'GET', path: `/businesses/${businessId}` });
-}
-
 // ---------------------------------------------------------------------------
 // Listings
 // ---------------------------------------------------------------------------
@@ -191,14 +177,6 @@ export function getListings(query?: ListingsQuery): Promise<ListingsResponse> {
 
 export function getListing(listingId: string): Promise<ListingResponse> {
   return request({ method: 'GET', path: `/listings/${listingId}` });
-}
-
-export function withdrawListing(listingId: string): Promise<WithdrawListingResponse> {
-  return request({ method: 'POST', path: `/listings/${listingId}/withdraw` });
-}
-
-export function getListingMatches(listingId: string, query?: MatchesQuery): Promise<ListingMatchesResponse> {
-  return request({ method: 'GET', path: `/listings/${listingId}/matches`, query });
 }
 
 // ---------------------------------------------------------------------------
@@ -217,18 +195,6 @@ export function createRequirementWithMatches(
   body: CreateRequirementRequest,
 ): Promise<CreateRequirementWithMatchesResponse> {
   return request({ method: 'POST', path: '/requirements', query: { withMatches: true }, body });
-}
-
-export function getRequirements(query?: RequirementsQuery): Promise<RequirementsResponse> {
-  return request({ method: 'GET', path: '/requirements', query });
-}
-
-export function getRequirement(requirementId: string): Promise<RequirementResponse> {
-  return request({ method: 'GET', path: `/requirements/${requirementId}` });
-}
-
-export function cancelRequirement(requirementId: string): Promise<CancelRequirementResponse> {
-  return request({ method: 'POST', path: `/requirements/${requirementId}/cancel` });
 }
 
 export function getRequirementMatches(
@@ -250,19 +216,8 @@ export function getReservations(query?: ReservationsQuery): Promise<Reservations
   return request({ method: 'GET', path: '/reservations', query });
 }
 
-export function getReservation(reservationId: string): Promise<ReservationResponse> {
-  return request({ method: 'GET', path: `/reservations/${reservationId}` });
-}
-
 export function handoffReservation(reservationId: string, body?: HandoffRequest): Promise<HandoffResponse> {
   return request({ method: 'POST', path: `/reservations/${reservationId}/handoff`, body });
-}
-
-export function cancelReservation(
-  reservationId: string,
-  body?: CancelReservationRequest,
-): Promise<CancelReservationResponse> {
-  return request({ method: 'POST', path: `/reservations/${reservationId}/cancel`, body });
 }
 
 // ---------------------------------------------------------------------------

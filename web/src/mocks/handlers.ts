@@ -19,7 +19,6 @@ import type {
   ListingStatus,
   MaterialCategory,
   MatchCheck,
-  RequirementStatus,
   Unit,
 } from '@dse/shared';
 import { apiError } from './errors.js';
@@ -28,8 +27,6 @@ import {
   addListing,
   addReservation,
   addRequirement,
-  cancelReservation,
-  cancelRequirement,
   getBusinessById,
   getBusinesses,
   getImpactRecords,
@@ -40,9 +37,8 @@ import {
   getReservationById,
   getReservations,
   handoffReservation,
-  withdrawListing,
 } from './state.js';
-import { distanceKm, evaluateMatch, findMatchesForListing, findMatchesForRequirement } from './matching.js';
+import { distanceKm, evaluateMatch, findMatchesForRequirement } from './matching.js';
 import { MOCK_TODAY } from './today.js';
 import { validateCreateListing, validateCreateRequirement } from './validate.js';
 
@@ -98,12 +94,6 @@ const metaCategories = http.get('*/v1/meta/categories', () => HttpResponse.json(
 const listBusinesses = http.get('*/v1/businesses', () => {
   const items = getBusinesses();
   return HttpResponse.json({ items, meta: { count: items.length, nextCursor: null, truncated: false } });
-});
-
-const getBusiness = http.get('*/v1/businesses/:businessId', ({ params }) => {
-  const business = getBusinessById(String(params.businessId));
-  if (!business) return apiError(404, 'BUSINESS_NOT_FOUND', 'Business not found');
-  return HttpResponse.json(business);
 });
 
 // ---------------------------------------------------------------------------
@@ -246,45 +236,6 @@ const getListing = http.get('*/v1/listings/:listingId', ({ request, params }) =>
   return HttpResponse.json({ ...listing, distanceKm: distanceKm(listing.location, actingBusiness.location) });
 });
 
-const withdrawListingHandler = http.post('*/v1/listings/:listingId/withdraw', ({ request, params }) => {
-  const business = getActingBusiness(request);
-  if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
-  const listing = getListingById(String(params.listingId));
-  if (!listing) return apiError(404, 'LISTING_NOT_FOUND', 'Listing not found');
-  if (listing.businessId !== business.businessId) return apiError(403, 'NOT_YOUR_LISTING', 'You do not own this listing');
-  if (listing.status === 'WITHDRAWN' || listing.status === 'COMPLETED' || listing.status === 'EXPIRED') {
-    return apiError(409, 'INVALID_STATE', `Listing is already ${listing.status.toLowerCase()}`);
-  }
-  withdrawListing(listing);
-  return HttpResponse.json(listing);
-});
-
-const getListingMatches = http.get('*/v1/listings/:listingId/matches', ({ request, params }) => {
-  const business = getActingBusiness(request);
-  if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
-  const listing = getListingById(String(params.listingId));
-  if (!listing) return apiError(404, 'LISTING_NOT_FOUND', 'Listing not found');
-  if (listing.businessId !== business.businessId) return apiError(403, 'NOT_YOUR_LISTING', 'You do not own this listing');
-
-  const url = new URL(request.url);
-  const includeNearMisses = url.searchParams.get('includeNearMisses') !== 'false';
-  const limit = Math.max(1, Number(url.searchParams.get('limit') ?? 20) || 20);
-
-  const result = findMatchesForListing({ listing, requirements: getRequirements(), today: MOCK_TODAY, includeNearMisses, limit });
-  const items = [...result.compatible, ...result.nearMisses];
-  return HttpResponse.json({
-    listing,
-    items,
-    meta: {
-      count: items.length,
-      compatibleCount: result.compatibleCountTotal,
-      nearMissCount: result.nearMissCountTotal,
-      truncated: result.truncated,
-      evaluatedAt: new Date().toISOString(),
-    },
-  });
-});
-
 // ---------------------------------------------------------------------------
 // Requirements
 // ---------------------------------------------------------------------------
@@ -333,54 +284,6 @@ const createRequirement = http.post('*/v1/requirements', async ({ request }) => 
   }
 
   return HttpResponse.json(requirement, { status: 201 });
-});
-
-const listRequirements = http.get('*/v1/requirements', ({ request }) => {
-  const url = new URL(request.url);
-  const actingBusiness = getActingBusiness(request);
-
-  let items = getRequirements().slice();
-
-  const mine = url.searchParams.get('mine') === 'true';
-  if (mine) {
-    if (!actingBusiness) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is required for mine=true');
-    items = items.filter((r) => r.businessId === actingBusiness.businessId);
-  }
-
-  const statuses = url.searchParams.getAll('status') as RequirementStatus[];
-  if (statuses.length) items = items.filter((r) => statuses.includes(r.status));
-
-  const categories = url.searchParams.getAll('category');
-  if (categories.length) items = items.filter((r) => categories.includes(r.category));
-
-  const city = url.searchParams.get('city');
-  if (city) items = items.filter((r) => r.city === city);
-
-  items = items.slice().sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));
-
-  const { page, nextCursor } = paginate(items, url);
-  return HttpResponse.json({ items: page, meta: { count: items.length, nextCursor, truncated: false } });
-});
-
-const getRequirement = http.get('*/v1/requirements/:requirementId', ({ params }) => {
-  const requirement = getRequirementById(String(params.requirementId));
-  if (!requirement) return apiError(404, 'REQUIREMENT_NOT_FOUND', 'Requirement not found');
-  return HttpResponse.json(requirement);
-});
-
-const cancelRequirementHandler = http.post('*/v1/requirements/:requirementId/cancel', ({ request, params }) => {
-  const business = getActingBusiness(request);
-  if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
-  const requirement = getRequirementById(String(params.requirementId));
-  if (!requirement) return apiError(404, 'REQUIREMENT_NOT_FOUND', 'Requirement not found');
-  if (requirement.businessId !== business.businessId) {
-    return apiError(403, 'NOT_YOUR_REQUIREMENT', 'You do not own this requirement');
-  }
-  if (requirement.status === 'CANCELLED' || requirement.status === 'FULFILLED' || requirement.status === 'EXPIRED') {
-    return apiError(409, 'INVALID_STATE', `Requirement is already ${requirement.status.toLowerCase()}`);
-  }
-  cancelRequirement(requirement);
-  return HttpResponse.json(requirement);
 });
 
 const getRequirementMatches = http.get('*/v1/requirements/:requirementId/matches', ({ request, params }) => {
@@ -525,17 +428,6 @@ const listReservations = http.get('*/v1/reservations', ({ request }) => {
   return HttpResponse.json({ items: page, meta: { count: items.length, nextCursor, truncated: false } });
 });
 
-const getReservation = http.get('*/v1/reservations/:reservationId', ({ request, params }) => {
-  const business = getActingBusiness(request);
-  if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
-  const reservation = getReservationById(String(params.reservationId));
-  if (!reservation) return apiError(404, 'RESERVATION_NOT_FOUND', 'Reservation not found');
-  if (reservation.buyerBusinessId !== business.businessId && reservation.supplierBusinessId !== business.businessId) {
-    return apiError(403, 'NOT_YOUR_RESERVATION', 'You are not a party to this reservation');
-  }
-  return HttpResponse.json(reservation);
-});
-
 const handoff = http.post('*/v1/reservations/:reservationId/handoff', async ({ request, params }) => {
   const business = getActingBusiness(request);
   if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
@@ -571,43 +463,6 @@ const handoff = http.post('*/v1/reservations/:reservationId/handoff', async ({ r
   const impactRecord = handoffReservation(reservation, listing, requirement);
 
   return HttpResponse.json({ reservation, listing, requirement, impactRecord });
-});
-
-const cancelReservationHandler = http.post('*/v1/reservations/:reservationId/cancel', async ({ request, params }) => {
-  const business = getActingBusiness(request);
-  if (!business) return apiError(401, 'BUSINESS_NOT_IDENTIFIED', 'X-Business-Id is missing or unknown');
-  const reservation = getReservationById(String(params.reservationId));
-  if (!reservation) return apiError(404, 'RESERVATION_NOT_FOUND', 'Reservation not found');
-  if (reservation.buyerBusinessId !== business.businessId && reservation.supplierBusinessId !== business.businessId) {
-    return apiError(403, 'NOT_YOUR_RESERVATION', 'You are not a party to this reservation');
-  }
-
-  let reason: string | undefined;
-  const raw = await request.text();
-  if (raw) {
-    let body: unknown;
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      return apiError(400, 'MALFORMED_JSON', 'Body was not valid JSON');
-    }
-    const reasonValue = (body as Record<string, unknown>).reason;
-    if (reasonValue !== undefined) {
-      if (typeof reasonValue !== 'string') return apiError(400, 'VALIDATION_FAILED', 'reason must be a string', { field: 'reason' });
-      reason = reasonValue;
-    }
-  }
-
-  if (reservation.status !== 'RESERVED') {
-    return apiError(409, 'INVALID_STATE', `Reservation is already ${reservation.status.toLowerCase()}`);
-  }
-
-  const listing = getListingById(reservation.listingId);
-  if (!listing) return apiError(404, 'LISTING_NOT_FOUND', 'Listing not found');
-  const requirement = reservation.requirementId ? getRequirementById(reservation.requirementId) ?? null : null;
-  cancelReservation(reservation, listing, requirement, reason);
-
-  return HttpResponse.json({ reservation, listing, requirement });
 });
 
 // ---------------------------------------------------------------------------
@@ -723,22 +578,14 @@ export const handlers = [
   health,
   metaCategories,
   listBusinesses,
-  getBusiness,
   createListing,
   listListings,
   getListing,
-  withdrawListingHandler,
-  getListingMatches,
   createRequirement,
-  listRequirements,
-  getRequirement,
-  cancelRequirementHandler,
   getRequirementMatches,
   createReservation,
   listReservations,
-  getReservation,
   handoff,
-  cancelReservationHandler,
   getImpact,
   routeNotFound,
 ];

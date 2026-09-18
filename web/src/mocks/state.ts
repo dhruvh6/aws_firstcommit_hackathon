@@ -104,11 +104,6 @@ export function addListing(input: Omit<SurplusListing, 'listingId' | 'createdAt'
   return listing;
 }
 
-export function withdrawListing(listing: SurplusListing): void {
-  listing.status = 'WITHDRAWN';
-  listing.updatedAt = new Date().toISOString();
-}
-
 // ---------------------------------------------------------------------------
 // Requirements
 // ---------------------------------------------------------------------------
@@ -137,11 +132,6 @@ export function addRequirement(
   };
   requirements.push(requirement);
   return requirement;
-}
-
-export function cancelRequirement(requirement: Requirement): void {
-  requirement.status = 'CANCELLED';
-  requirement.updatedAt = new Date().toISOString();
 }
 
 // ---------------------------------------------------------------------------
@@ -238,22 +228,6 @@ export function handoffReservation(
   };
   impactRecords.push(impactRecord);
   return impactRecord;
-}
-
-/** Cancel: returns quantity to the listing. No ImpactRecord, ever. */
-export function cancelReservation(reservation: Reservation, listing: SurplusListing, requirement: Requirement | null, reason?: string): void {
-  reservation.status = 'CANCELLED';
-  reservation.cancelledAt = new Date().toISOString();
-  if (reason !== undefined) reservation.cancellationReason = reason;
-
-  listing.availableQuantity = round2(listing.availableQuantity + reservation.reservedQuantity);
-  listing.reservedQuantity = round2(listing.reservedQuantity - reservation.reservedQuantity);
-  touchListing(listing);
-
-  if (requirement) {
-    requirement.reservedQuantity = round2(requirement.reservedQuantity - reservation.reservedQuantity);
-    touchRequirement(requirement);
-  }
 }
 
 // ---------------------------------------------------------------------------

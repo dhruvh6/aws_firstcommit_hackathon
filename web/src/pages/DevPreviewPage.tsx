@@ -138,6 +138,12 @@ export function DevPreviewPage(): React.JSX.Element {
           <StatusChip kind="reservationStatus" status="RESERVED" />
           <StatusChip kind="reservationStatus" status="HANDED_OFF" />
         </Sub>
+        <Sub title="condition">
+          <StatusChip kind="condition" status="UNUSED" />
+          <StatusChip kind="condition" status="CLEAN_USABLE" />
+          <StatusChip kind="condition" status="MIXED" />
+          <StatusChip kind="condition" status="NEEDS_SORTING" />
+        </Sub>
         <Sub title="unknown enum value -> neutral chip, raw string, never throws">
           <StatusChip kind="listingStatus" status="ON_BACKORDER" />
         </Sub>
