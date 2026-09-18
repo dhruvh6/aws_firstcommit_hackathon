@@ -1,16 +1,26 @@
 /**
  * TanStack Query hooks layered on api/client.ts. OWNER: M1.
  */
-import { useQuery } from '@tanstack/react-query';
-import type { UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type {
+  HandoffResponse,
   ListingResponse,
+  ListingsQuery,
+  ListingsResponse,
   MetaCategoriesResponse,
   RequirementMatchesResponse,
   ReservationsQuery,
   ReservationsResponse,
 } from '@dse/shared';
-import { getListing, getMetaCategories, getRequirementMatches, getReservations } from './client.js';
+import {
+  getListing,
+  getListings,
+  getMetaCategories,
+  getRequirementMatches,
+  getReservations,
+  handoffReservation,
+} from './client.js';
 
 /**
  * GET /v1/meta/categories - static taxonomy, fetched once and cached for
@@ -57,11 +67,47 @@ export function useListing(listingId: string | undefined): UseQueryResult<Listin
 
 /**
  * GET /v1/reservations - S9's fallback lookup (no per-id endpoint; docs/06 § 2
- * cut-route rule) and S8's dashboard tables later.
+ * cut-route rule) and S8's dashboard tables.
  */
 export function useReservations(query?: ReservationsQuery): UseQueryResult<ReservationsResponse> {
   return useQuery({
     queryKey: ['reservations', query ?? {}],
     queryFn: () => getReservations(query),
+  });
+}
+
+/**
+ * GET /v1/listings?mine=true - S8's "My listings" tab. Shares the
+ * `['listings']` prefix with `useListing` above, so one write invalidates
+ * both the list and any open single-listing view.
+ */
+export function useListings(query?: ListingsQuery): UseQueryResult<ListingsResponse> {
+  return useQuery({
+    queryKey: ['listings', query ?? {}],
+    queryFn: () => getListings(query),
+  });
+}
+
+/**
+ * POST /v1/reservations/{id}/handoff - shared by S8 (Incoming tab) and S9
+ * (Confirm handoff), so the mutation and its cache invalidation exist once.
+ * Component-specific side effects (closing a dialog, holding the fresh
+ * envelope for display) are passed as per-call callbacks to `.mutate()`,
+ * not baked in here - docs/06 § 11 forbids optimistic UI, so callers must
+ * wait for this to resolve before updating anything themselves.
+ */
+export function useHandoffReservation(): UseMutationResult<
+  HandoffResponse,
+  Error,
+  { reservationId: string; note?: string }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ reservationId, note }) => handoffReservation(reservationId, note !== undefined ? { note } : undefined),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      void queryClient.invalidateQueries({ queryKey: ['impact'] });
+      void queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
   });
 }
