@@ -12,11 +12,10 @@
  */
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Reservation, SurplusListing } from '@dse/shared';
 import { label } from '@dse/shared';
-import { ApiError, handoffReservation } from '../api/client.js';
-import { useListing, useReservations } from '../api/queries.js';
+import { ApiError } from '../api/client.js';
+import { useHandoffReservation, useListing, useReservations } from '../api/queries.js';
 import { useActingBusiness } from '../state/actingBusiness.js';
 import { Button } from '../components/Button.js';
 import { CheckList } from '../components/CheckList.js';
@@ -51,7 +50,6 @@ export function ReservationDetailPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const acting = useActingBusiness();
-  const queryClient = useQueryClient();
 
   const routerState = isRouterState(location.state) && location.state.reservation.reservationId === id
     ? location.state
@@ -67,16 +65,7 @@ export function ReservationDetailPage(): React.JSX.Element {
   const listingQuery = useListing(reservation?.listingId);
   const listingTitle = freshEnvelope?.listing.title ?? listingQuery.data?.title;
 
-  const handoffMutation = useMutation({
-    mutationFn: () => handoffReservation(id as string),
-    onSuccess: (response) => {
-      setFreshEnvelope({ reservation: response.reservation, listing: response.listing });
-      setDialogOpen(false);
-      void queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      void queryClient.invalidateQueries({ queryKey: ['impact'] });
-    },
-    onError: () => setDialogOpen(false),
-  });
+  const handoffMutation = useHandoffReservation();
 
   const stillLoading = !reservation && listQuery.isPending;
   if (stillLoading) return <PageSkeleton />;
@@ -192,7 +181,18 @@ export function ReservationDetailPage(): React.JSX.Element {
         confirmLabel="Confirm handoff"
         cancelLabel="Not yet"
         loading={handoffMutation.isPending}
-        onConfirm={() => handoffMutation.mutate()}
+        onConfirm={() =>
+          handoffMutation.mutate(
+            { reservationId: id as string },
+            {
+              onSuccess: (response) => {
+                setFreshEnvelope({ reservation: response.reservation, listing: response.listing });
+                setDialogOpen(false);
+              },
+              onError: () => setDialogOpen(false),
+            },
+          )
+        }
         onCancel={() => setDialogOpen(false)}
       />
     </div>
