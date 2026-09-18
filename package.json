@@ -18,6 +18,7 @@
     "dev:web": "npm run dev -w web",
     "dev:web:mock": "npm run dev:mock -w web",
     "build": "npm run build --workspaces --if-present",
+    "build:lambda": "node scripts/build-lambda.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
