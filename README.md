@@ -190,7 +190,13 @@ MSW (mock backend) · lucide-react
 
 ## Run it
 
-**Live URL:** _pending deployment - to be filled before submission_
+**Deployed API:** `https://m99973ijbb.execute-api.ap-south-1.amazonaws.com/v1`
+**Live app URL:** _pending - Amplify Hosting not yet connected_
+
+> The deployed API currently runs with `REPO_DRIVER=memory`, so state lives in Lambda
+> memory rather than DynamoDB and is per-container. The five tables are provisioned and
+> waiting on `repo/dynamo.ts`. Not yet suitable for recording against - see
+> [docs/05 § 9](docs/05-ARCHITECTURE.md).
 
 ```bash
 git clone https://github.com/dhruvh6/aws_firstcommit_hackathon.git

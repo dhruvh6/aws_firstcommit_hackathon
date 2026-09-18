@@ -297,6 +297,33 @@ deploy.
 Console-only infrastructure is not acceptable: `infra/` must describe the stack in code, or
 the architecture claim in the write-up has nothing behind it.
 
+### Deployment status - 18 September
+
+| Item | Value |
+|---|---|
+| API base URL | `https://m99973ijbb.execute-api.ap-south-1.amazonaws.com/v1` |
+| Region | `ap-south-1` |
+| Tables provisioned | `dse-businesses`, `dse-listings`, `dse-requirements`, `dse-reservations`, `dse-impact` |
+| Frontend | not yet deployed - Amplify not connected |
+| **Driver** | **`REPO_DRIVER=memory`** |
+
+**The deployment is not yet demo-ready, and the reason is the driver.** With the in-memory
+repository, each Lambda container keeps its own copy of state seeded from `fixtures/`.
+Measured on 18 September: one listing created, then 20 simultaneous reads returned
+**11 responses showing 5 listings** (fresh containers, the new row invisible), 3 showing 8
+(the warm container), and 6 `503`s. A single-user sequential flow was consistent 10/10,
+because every request hit the same warm container - but any cold start between takes resets
+it, and a listing created on camera disappears.
+
+Two consequences:
+
+1. **Do not record against this URL until `repo/dynamo.ts` lands and `REPO_DRIVER` flips to
+   `dynamo`.** The five tables exist and nothing reads or writes them, so the DynamoDB claim
+   in the write-up is not yet true either.
+2. The `503`s under concurrency are separate from the driver - most likely a Lambda
+   concurrent-execution quota on a new account. Harmless for a single-user demo, but check
+   Service Quotas before a judge clicks around.
+
 ```bash
 cd infra && sam build && sam deploy --guided     # first time
 sam deploy                                        # thereafter
