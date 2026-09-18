@@ -13,16 +13,29 @@ Confirmations are collected in
 **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** - transcribe
 them here as they arrive, so the record lives in the repository and not only in a thread.
 
-| Item | M1 | M2 | M3 | M4 |
+**All eight rows confirmed for all four members, 18 September.** Eligibility is closed.
+
+| Item | M1 Vedika | M2 Prakriti | M3 Siddhi | M4 |
 |---|---|---|---|---|
-| University student in India | ☐ | ☐ | ☐ | ☐ |
-| 18 or older | ☐ | ☐ | ☐ | ☐ |
-| Registered individually for the Bharat Builds Tour | ☐ | ☐ | ☐ | ☐ |
-| WeMakeDevs account | ☐ | ☐ | ☐ | ☐ |
-| AWS Builder Center profile | ☐ | ☐ | ☐ | ☐ |
-| Student status verified on Builder Center | ☐ | ☐ | ☐ | ☐ |
-| **Checked in to First Commit specifically** | ☐ | ☐ | ☐ | ☐ |
-| On no other team for this stop | ☐ | ☐ | ☐ | ☐ |
+| University student in India | ☑ | ☑ | ☑ | ☑ |
+| 18 or older | ☑ | ☑ | ☑ | ☑ |
+| Registered individually for the Bharat Builds Tour | ☑ | ☑ | ☑ | ☑ |
+| WeMakeDevs account | ☑ | ☑ | ☑ | ☑ |
+| AWS Builder Center profile | ☑ | ☑ | ☑ | ☑ |
+| Student status verified on Builder Center | ☑ | ☑ | ☑ | ☑ |
+| **Checked in to First Commit specifically** | ☑ | ☑ | ☑ | ☑ |
+| On no other team for this stop | ☑ | ☑ | ☑ | ☑ |
+
+> The check-in row was confirmed separately from tour registration, because they are
+> different actions: one tour registration covers the six stops, but each hackathon needs
+> its own check-in on `wemakedevs.org/aws/first-commit`. Asked and answered per person
+> rather than inferred from "we registered".
+
+**What this closes.** Eligibility was the only item on the project that could invalidate
+the submission regardless of build quality - a single unverified member voids the entry for
+all four. It is now settled, and nothing else on the risk list has that property. Every
+remaining risk is about finishing the work, which is a schedule problem rather than a
+validity one.
 
 One tour registration covers the six tour stops, but each hackathon needs its own check-in.
 M4 confirms all four rows are complete at CP1 and says so in the channel.
