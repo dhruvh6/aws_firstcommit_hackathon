@@ -4,8 +4,14 @@
   "private": true,
   "description": "B2B circular material exchange for industrial surplus - First Commit 2026",
   "license": "MIT",
-  "engines": { "node": ">=22" },
-  "workspaces": ["shared", "api", "web"],
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "shared",
+    "api",
+    "web"
+  ],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w api",
@@ -16,9 +22,9 @@
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
     "test:contract": "npm run test:contract -w api",
-    "seed:local": "tsx scripts/seed-local.ts",
-    "seed:dynamo": "tsx scripts/seed-dynamo.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts",
+    "seed:local": "tsx scripts/seed-local.mts",
+    "seed:dynamo": "tsx scripts/seed-dynamo.mts",
+    "seed:demo": "tsx scripts/seed-demo.mts",
     "smoke": "bash scripts/smoke.sh"
   },
   "devDependencies": {

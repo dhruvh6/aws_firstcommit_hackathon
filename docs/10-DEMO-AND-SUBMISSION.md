@@ -74,8 +74,27 @@ Day 4 20:00.**
 
 ## 3. Demo seed state
 
-`scripts/seed-demo.ts` resets to exactly this. Re-runnable and idempotent - any bad state is
-one command from clean. Full data in [`../fixtures/`](../fixtures/).
+`scripts/seed-demo.mts` puts the exchange into exactly this state. Re-runnable and
+idempotent - any bad state is one command from clean. Full data in
+[`../fixtures/`](../fixtures/).
+
+```bash
+npm run seed:demo                        # against localhost:3001/v1
+npm run seed:demo -- --dry-run           # print the plan, change nothing
+npm run seed:demo -- --include-star      # also seed lst_001 and req_001 (rehearsal)
+npm run seed:demo -- --today 2026-09-20  # preview demo-day dates
+npm run seed:demo -- --verbose           # print every POST body
+API_BASE_URL=<deployed> npm run seed:demo
+```
+
+**Every date is shifted by `today - 2026-09-17`.** The fixtures encode *offsets*, not
+absolute dates; the literals are an accident of when they were written. The script also
+prints the two dates to type on camera and checks them against match rule C5, so the
+compatible match cannot vanish mid-recording (see [../fixtures/README.md](../fixtures/README.md) § 5).
+
+It refuses to guess: it fails with a clear message and a non-zero exit if the API is
+unreachable or a business is missing, warns if reservations already exist, and warns if any
+listing already in the store has a window ending today or earlier.
 
 ### Businesses
 
@@ -119,8 +138,23 @@ precisely-explained red ones.
 - `RESERVATION_TTL_MINUTES=30` so the hold countdown is visibly short on camera.
 - Browser: fresh profile, no extensions, 1920x1080, zoom 100%, acting as
   **Furniture Workshop A**.
-- **`req_001` is created live during the recording** - the seed contains `req_002`-`req_004`
-  only, so the WOW moment is genuinely computed on camera rather than replayed.
+- **`lst_001` and `req_001` are both created live during the recording** - the seed contains
+  `lst_002`-`lst_006` and `req_002`-`req_004` only.
+
+**Why the star listing is not seeded.** Verified by rehearsal on 18 September: seeding
+`lst_001` *and* creating the 80 kg listing on camera puts **two identical compatible
+listings** in the match set, which muddies the one screen the whole submission rests on.
+With `lst_001` left out, the rehearsal produces exactly the documented result:
+
+```
+compatible=1  near-misses=2
+COMPATIBLE  <created on camera>   qty=50  dist=6.9   fails=-
+near-miss   lst_006 clone         qty=50  dist=19.8  fails=[WITHIN_SERVICE_AREA]
+near-miss   lst_005 clone         qty=25  dist=6.9   fails=[ATTRIBUTES_SATISFIED, CONDITION_ACCEPTED]
+```
+
+One green card with six ticks, two red cards each failing for a different, stated reason.
+That is the shot.
 
 ## 4. Demo video
 
