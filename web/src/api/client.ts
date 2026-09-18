@@ -35,7 +35,7 @@ import type {
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:3001/v1';
 
-const ACTING_BUSINESS_ID_KEY = 'dse.actingBusinessId';
+export const ACTING_BUSINESS_ID_KEY = 'dse.actingBusinessId';
 
 /** Client-side-only codes for failures that never reach the server's error table. */
 export type ApiClientErrorCode = 'NETWORK_ERROR' | 'INVALID_RESPONSE';
