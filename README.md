@@ -266,19 +266,22 @@ repository - the schema has no contact fields at all, by design
 
 ## AI tools used
 
-Disclosed per the competition rules. **Each team member must confirm their own row before
-submission** - this table is not complete until they do.
+Disclosed per the competition rules. All four members have confirmed their own row.
 
-| Member | Role | AI tools used |
+| Member | Area | AI tools used |
 |---|---|---|
-| M4 - integration, QA, docs | specifications, contract tests, seeders, reviews | **Claude Code (Claude Opus 5)** - used for specification drafting, test authoring, tooling scripts and code review. Commits it co-authored carry a `Co-Authored-By` trailer |
-| M1 - frontend | _to be confirmed_ | _to be confirmed_ |
-| M2 - backend | _to be confirmed_ | _to be confirmed_ |
-| M3 - infrastructure | _to be confirmed_ | _to be confirmed_ |
+| M1 - Vedika | Frontend: design system, API client, mock backend, app shell | **Claude Code** (Anthropic) |
+| M2 - Prakriti | Backend: domain model, matching engine, repository layer, endpoints | **Codex** (OpenAI) |
+| M3 - Siddhi | Infrastructure: SAM template, DynamoDB tables, Lambda deployment | **Antigravity** (Google) |
+| M4 - integration, QA, docs | Specifications, contract tests, seed tooling, code review | **Claude Code** (Anthropic). Commits it co-authored carry a `Co-Authored-By` trailer |
+
+Every AI-assisted change went through the same route as any other: a pull request, green
+CI, and review by a different member. Three different assistants were used across the
+team, and no tool was given commit access - a person opened, reviewed and merged every
+change.
 
 AI assistance does not change the fact that this is the team's own competition project,
-built inside the event window. Every AI-assisted change went through the same review as any
-other: a pull request, green CI, and a human approval.
+built inside the event window.
 
 ## Demo
 
