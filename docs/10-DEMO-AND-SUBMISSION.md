@@ -56,6 +56,10 @@ So the CP9 target of Sunday 20:00 in [09-INTEGRATION-PLAN.md](09-INTEGRATION-PLA
 **our own target, not the official cutoff**. Two consequences:
 
 1. M4 checks `wemakedevs.org/aws/first-commit/schedule` once a day and posts any change.
+   **Checked 18 September, 15:00 IST: still unpublished**, same wording as the day before -
+   no kickoff time, no mentor session times, no deadline, and the in-person hours are listed
+   as pending on the schedule page even though the overview page says 8 AM - 8 PM. Keep
+   checking; until it appears, our own CP9 target stands.
 2. Submit something valid **early** and refine it. The rules allow editing a submission up
    to the deadline but not after it, so a valid submission on Saturday night beats aiming at
    an unknown Sunday time.

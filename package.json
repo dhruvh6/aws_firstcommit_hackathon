@@ -22,12 +22,13 @@
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
     "test:contract": "npm run test:contract -w api",
-    "seed:local": "tsx scripts/seed-local.mts",
     "seed:dynamo": "tsx scripts/seed-dynamo.mts",
     "seed:demo": "tsx scripts/seed-demo.mts",
     "smoke": "bash scripts/smoke.sh"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1135.0",
+    "@aws-sdk/lib-dynamodb": "^3.1135.0",
     "@eslint/js": "^9.39.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.0",

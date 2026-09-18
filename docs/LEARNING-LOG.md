@@ -74,3 +74,25 @@ order, and every error code in docs/04 § 4 are present and faithful.
   rather than in the `:root` block, so tokens.css has two sources of truth by
   namespace instead of one. `@theme static` keeps them emitted even when no
   utility references them yet.
+
+## 2026-09-18 - M4
+
+- Learned: two implementations of the same rules can be compared mechanically instead of by
+  reading them. Both matching engines - the real one in `api/src/domain/matching.ts` and M1's
+  mock in `web/src/mocks/matching.ts` - are pure and take `today` as an argument, so a
+  throwaway harness could call both on the same fixture and diff every field. They agreed on
+  order, flags, quantities, distances and scores, and disagreed on exactly one thing: a month
+  abbreviation.
+- Failed first: reviewing a 2800-line PR by reading it. The `Sept` vs `Sep` divergence is
+  invisible in the source, because `Intl.DateTimeFormat('en-GB', { month: 'short' })` looks
+  more correct than a hardcoded month array, and modern ICU renders `Sept`.
+- Changed: review by execution where the code is pure - a 40-line harness found in one run
+  what reading would have missed, and the same approach caught the mock validator accepting
+  two fields the real API rejects.
+- Trade-off: `Intl` is the obvious tool for formatting a date and it is the wrong one here.
+  `en-GB` and `en-IN` give `20 Sept`, `en-US` gives `Sep 20` with the parts reversed. When a
+  string is part of a contract, the contract has to own the formatting.
+
+- Also learned: a red test is not evidence of a bug in the code under review. Four contract
+  cases failed against M2's correct implementation because the suite hardcoded dates that had
+  since passed, and the API was right to reject them. Nearly filed as backend bugs.
