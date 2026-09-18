@@ -1,5 +1,5 @@
 {
-  "_comment": "Test oracle for docs/03-MATCHING-SPEC.md § 8. Computed from the frozen ranking formula with today = 2026-09-17. M2 asserts these in unit tests; M4 asserts them against the deployed API. If code and this file disagree, check the formula before changing the file.",
+  "_comment": "Test oracle for docs/03-MATCHING-SPEC.md § 8. Computed from the frozen ranking formula with today = 2026-09-17. M2 asserts these in unit tests; M4 asserts them against the deployed API. If code and this file disagree, check the formula before changing the file.", "_scoresAreDateDependent": "The `score` and `scoreParts.urgency` values below hold ONLY for today = 2026-09-17, because urgency = 1 - min(1, daysUntil(availableUntil) / 14). On 2026-09-18 the correct score for lst_001 is 0.781, not 0.7739, and that is not a regression. Unit tests must inject `today` explicitly rather than reading the clock; a test that asserts a bare score without pinning `today` will go red overnight for no reason. `compatible`, `checks[].passed`, `compatibleQuantity`, `distanceKm` and the result ORDER are date-independent as long as every window still covers requiredBy - assert those.",
   "req_001": {
     "today": "2026-09-17",
     "remainingRequirement": 50,

@@ -27,6 +27,19 @@ const BASE = process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
 const SUPPLIER = 'biz_001'; // Furniture Workshop A, Andheri East
 const BUYER = 'biz_002';    // Decor & Packaging Business B, Bandra West
 
+/**
+ * Dates are derived from today, never hardcoded. The API validates
+ * `availableFrom >= today` and `requiredBy >= today` (docs/04 § 3), so a
+ * literal date in a test is a time bomb: this suite was written with
+ * 2026-09-17 and started failing the next morning with a 400 on availableFrom,
+ * which looked exactly like a backend bug and was not.
+ */
+const day = (offset: number): string =>
+  new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const TODAY = day(0);
+const IN_2_DAYS = day(2);
+const IN_4_DAYS = day(4);
+
 /** Shared state across the ordered cases. */
 const ctx: { listingId?: string; requirementId?: string; reservationId?: string } = {};
 
@@ -121,8 +134,8 @@ test('2. POST /listings creates lst_001-shaped surplus with availableQuantity 80
       unit: 'KG',
       condition: 'CLEAN_USABLE',
       attributes: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 15, maxPieceSizeCm: 40, treated: false, woodType: 'Plywood' },
-      availableFrom: '2026-09-17',
-      availableUntil: '2026-09-20',
+      availableFrom: TODAY,
+      availableUntil: IN_4_DAYS,
       handoffMode: 'PICKUP',
       referencePriceInr: 28,
     },
@@ -144,7 +157,7 @@ test('3. POST /listings with a negative quantity is 400 VALIDATION_FAILED on tot
       title: 'Bad listing', category: 'WOOD_OFFCUTS', totalQuantity: -5, unit: 'KG',
       condition: 'CLEAN_USABLE',
       attributes: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 15, maxPieceSizeCm: 40, treated: false },
-      availableFrom: '2026-09-17', availableUntil: '2026-09-20', handoffMode: 'PICKUP',
+      availableFrom: TODAY, availableUntil: IN_4_DAYS, handoffMode: 'PICKUP',
     },
   });
   assert.equal(res.status, 400);
@@ -184,7 +197,7 @@ test('4. POST /requirements?withMatches=true returns the requirement and one com
       acceptedConditions: ['UNUSED', 'CLEAN_USABLE'],
       constraints: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 10, allowTreated: false },
       radiusKm: 15,
-      requiredBy: '2026-09-19',
+      requiredBy: IN_2_DAYS,
       notes: 'For non-structural decor pieces.',
     },
   });
@@ -193,11 +206,21 @@ test('4. POST /requirements?withMatches=true returns the requirement and one com
   ctx.requirementId = res.body.requirement.requirementId;
 
   const compatible = res.body.matches.filter((m: any) => m.compatible);
-  assert.equal(compatible.length >= 1, true, 'expected at least one compatible match');
+  assert.ok(compatible.length >= 1, 'expected at least one compatible match');
+
+  /**
+   * Do NOT assume the listing this suite just created ranks first. With the
+   * fixtures seeded there are several compatible wood listings, and ranking is
+   * by score (docs/03 § 6) - a seeded listing that expires sooner legitimately
+   * outranks a fresh one on `urgency`. Assert that ours is present and that the
+   * top match is well-formed, not that they are the same row.
+   */
+  const ours = compatible.find((m: any) => m.listingId === ctx.listingId);
+  assert.ok(ours, 'the listing created in case 2 should be a compatible match');
+  assert.equal(ours.compatibleQuantity, 50);
+  assert.equal(ours.distanceKm, 6.9, 'Andheri East -> Bandra West is 6.9 km');
+
   const top = compatible[0];
-  assert.equal(top.listingId, ctx.listingId);
-  assert.equal(top.compatibleQuantity, 50);
-  assert.equal(top.distanceKm, 6.9, 'Andheri East -> Bandra West is 6.9 km');
 
   // docs/04 § 3: all six checks, always, in docs/03 § 2 order
   assert.deepEqual(top.checks.map((c: any) => c.code), [
@@ -213,8 +236,17 @@ test('4. POST /requirements?withMatches=true returns the requirement and one com
 test('5. GET /requirements/{id}/matches explains the near-misses', when(), async () => {
   const res = await call('GET', `/requirements/${ctx.requirementId}/matches?includeNearMisses=true`, { businessId: BUYER });
   assert.equal(res.status, 200);
-  assert.equal(res.body.meta.compatibleCount, 1);
-  assert.equal(res.body.meta.nearMissCount, 2, 'lst_005 fails size/treatment/condition; lst_006 fails distance');
+  /**
+   * Counts are >= rather than ==: case 2 of this suite adds its own compatible
+   * wood listing, so the pristine fixture figures (1 compatible, 2 near-misses)
+   * do not hold once the suite has run. What must hold is that the seeded
+   * near-misses are still there and still explained.
+   */
+  assert.ok(res.body.meta.compatibleCount >= 1, 'at least the seeded lst_001 is compatible');
+  assert.ok(
+    res.body.meta.nearMissCount >= 2,
+    'lst_005 fails size/treatment/condition and lst_006 fails distance - both must be returned and explained',
+  );
 
   // compatible first, then near-misses (docs/04 § 3 guarantee 4)
   const flags = res.body.items.map((m: any) => m.compatible);
@@ -234,6 +266,13 @@ test('5. GET /requirements/{id}/matches explains the near-misses', when(), async
   );
   assert.ok(distanceMiss, 'expected a listing rejected on distance');
   assert.equal(distanceMiss.distanceKm, 19.8, 'Vashi -> Bandra West is 19.8 km');
+
+  const attributeMiss = res.body.items.find(
+    (m: any) => !m.compatible && m.checks.some((c: any) => c.code === 'ATTRIBUTES_SATISFIED' && !c.passed),
+  );
+  assert.ok(attributeMiss, 'expected a listing rejected on dimensions - the second red card in the demo');
+  const conditionCheck = attributeMiss.checks.find((c: any) => c.code === 'CONDITION_ACCEPTED');
+  assert.equal(conditionCheck.passed, false, 'lst_005 is MIXED, which the requirement does not accept');
 
   assert.ok(!res.body.items.some((m: any) => m.listing.businessId === BUYER), 'never match a business to itself');
 });
