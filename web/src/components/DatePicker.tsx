@@ -1,17 +1,18 @@
 /**
- * Input - docs/07-DESIGN-SYSTEM.md § 4 component table.
- * OWNER: M1.
+ * DatePicker - docs/07-DESIGN-SYSTEM.md § 4 component table. A thin styled
+ * wrapper over the native `<input type="date">`: this screen favours speed
+ * over polish (docs/06 § 7), and the design system gives no calendar-popup
+ * visual spec to build against. OWNER: M1.
  */
 import { useId } from 'react';
-import type { InputHTMLAttributes, ReactNode, WheelEvent } from 'react';
+import type { InputHTMLAttributes } from 'react';
 
-export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'id'> {
+export interface DatePickerProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type' | 'prefix'> {
   label: string;
   helper?: string;
   error?: string;
   required?: boolean;
-  prefix?: ReactNode;
-  suffix?: ReactNode;
   id?: string;
 }
 
@@ -19,34 +20,21 @@ function cx(...classes: Array<string | false | undefined>): string {
   return classes.filter(Boolean).join(' ');
 }
 
-export function Input({
+export function DatePicker({
   label,
   helper,
   error,
   required,
-  prefix,
-  suffix,
   id,
   className,
   disabled,
-  readOnly,
-  type,
-  onWheel,
   ...rest
-}: InputProps): React.JSX.Element {
+}: DatePickerProps): React.JSX.Element {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperId = helper ? `${inputId}-helper` : undefined;
   const errorId = error ? `${inputId}-error` : undefined;
   const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
-
-  // Scrolling the page while the cursor happens to sit over a number input
-  // silently changes its value in Chrome/Firefox unless the field is
-  // blurred first - there is no CSS/attribute to disable this natively.
-  function handleWheel(event: WheelEvent<HTMLInputElement>): void {
-    if (type === 'number') event.currentTarget.blur();
-    onWheel?.(event);
-  }
 
   return (
     <div className={cx('flex flex-col gap-1.5', className)}>
@@ -59,23 +47,18 @@ export function Input({
           'flex h-10 items-center rounded-md border bg-white px-3 focus-within:border-brand-500',
           error ? 'border-danger-700' : 'border-ink-300',
           disabled && 'border-ink-200 bg-ink-100',
-          readOnly && !disabled && 'bg-ink-050',
         )}
       >
-        {prefix && <span className="mr-2 shrink-0 text-[15px] text-ink-600">{prefix}</span>}
         <input
           id={inputId}
-          type={type}
+          type="date"
           disabled={disabled}
-          readOnly={readOnly}
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          onWheel={handleWheel}
-          className="w-full min-w-0 bg-transparent text-[15px] text-ink-900 placeholder:text-ink-500 disabled:cursor-not-allowed disabled:text-ink-500"
+          className="w-full min-w-0 bg-transparent text-[15px] text-ink-900 disabled:cursor-not-allowed disabled:text-ink-500"
           {...rest}
         />
-        {suffix && <span className="ml-2 shrink-0 text-[15px] text-ink-600">{suffix}</span>}
       </div>
       {error ? (
         <p id={errorId} className="text-[13px] text-danger-700">
