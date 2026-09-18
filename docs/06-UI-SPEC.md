@@ -54,6 +54,16 @@ Two rules keep the borrowing honest:
 
 Ten routes. Anything not on this list is out of scope.
 
+**Build order, revised 18 September.** The demo path comes first:
+**S4 -> S5 -> S6 -> S7 -> S8**. S2 Browse and S3 Listing detail next. **S1 Home and S10
+Impact are last** - a landing page and charts win nothing if the reservation flow is
+broken, and the shot list in [10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 4
+only needs S4 through S8 plus a glance at S10.
+
+The nine routes cut in [04-API-CONTRACT.md](04-API-CONTRACT.md) § 2 have **no UI**: no
+withdraw button, no cancel-reservation button, no supplier-side matches screen, no photo
+upload. Remove those affordances rather than wiring them to endpoints that do not exist.
+
 ## 3. Global shell
 
 ```

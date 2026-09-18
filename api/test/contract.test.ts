@@ -1,0 +1,339 @@
+/**
+ * Contract test suite - docs/04-API-CONTRACT.md § 5.
+ *
+ * OWNER: M4. This is M2's checklist: when every case here passes against a
+ * running API, the backend is done. Run it against anything:
+ *
+ *   npm run dev:api                 # in one terminal
+ *   npm run test:contract           # in another
+ *   API_BASE_URL=https://<api-id>.execute-api.ap-south-1.amazonaws.com/v1 \
+ *     npm run test:contract         # against the deployment (the Day-3 gate)
+ *
+ * The whole suite SKIPS when the API is unreachable, so `npm test` stays green
+ * in CI where no server runs. It starts reporting real failures the moment an
+ * endpoint exists - which is the point: red here means "not built yet", and
+ * green here means Prakriti is done.
+ *
+ * Scope: the 11 demo-critical routes kept in the 18 September scope cut
+ * (docs/04 § 2). Cut routes are deliberately not tested.
+ *
+ * State flows through the file in order - node:test runs tests in a file
+ * sequentially. Case 6 depends on case 4's requirement, and so on.
+ */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+const BASE = process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
+const SUPPLIER = 'biz_001'; // Furniture Workshop A, Andheri East
+const BUYER = 'biz_002';    // Decor & Packaging Business B, Bandra West
+
+/** Shared state across the ordered cases. */
+const ctx: { listingId?: string; requirementId?: string; reservationId?: string } = {};
+
+interface Res<T = any> { status: number; body: T }
+
+async function call<T = any>(
+  method: string,
+  path: string,
+  opts: { body?: unknown; businessId?: string } = {},
+): Promise<Res<T>> {
+  const headers: Record<string, string> = {};
+  if (opts.body !== undefined) headers['content-type'] = 'application/json';
+  if (opts.businessId) headers['x-business-id'] = opts.businessId;
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+  });
+  const text = await res.text();
+  let body: unknown = undefined;
+  try { body = text ? JSON.parse(text) : undefined; } catch { body = text; }
+  return { status: res.status, body: body as T };
+}
+
+/** Every non-2xx must carry the full envelope - docs/04 § 1. */
+function assertErrorEnvelope(res: Res, code: string): void {
+  assert.ok(res.body?.error, `expected an error envelope, got ${JSON.stringify(res.body)}`);
+  assert.equal(res.body.error.code, code);
+  assert.equal(typeof res.body.error.message, 'string');
+  assert.deepEqual(Object.keys(res.body.error).sort(), ['code', 'details', 'field', 'message']);
+}
+
+/**
+ * Probed at module load with a top-level await, NOT in a before() hook: the
+ * per-test skip option is evaluated when test() is called, which happens before
+ * any hook runs. Probing in a hook makes every case skip unconditionally.
+ */
+const reachable = await (async () => {
+  try {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 2000);
+    const res = await fetch(`${BASE}/health`, { signal: c.signal });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+})();
+
+if (!reachable) {
+  console.log(`\n  [contract] SKIPPING - no API at ${BASE}. Start one with: npm run dev:api\n`);
+}
+
+const when = () => ({ skip: reachable ? false : `no API at ${BASE}` });
+
+// ── 1 ───────────────────────────────────────────────────────────────────────
+test('1. GET /meta/categories returns the four categories and every enum label', when(), async () => {
+  const res = await call('GET', '/meta/categories');
+  assert.equal(res.status, 200);
+  const codes = res.body.items.map((i: any) => i.code).sort();
+  assert.deepEqual(codes, ['ACRYLIC_SHEET', 'FABRIC_OFFCUTS', 'PACKAGING_CARDBOARD', 'WOOD_OFFCUTS']);
+  for (const kind of ['condition', 'unit', 'handoffMode', 'listingStatus', 'requirementStatus', 'reservationStatus']) {
+    assert.ok(res.body.enumLabels[kind], `enumLabels.${kind} missing`);
+  }
+  const wood = res.body.items.find((i: any) => i.code === 'WOOD_OFFCUTS');
+  assert.ok(Array.isArray(wood.attributeFields) && wood.attributeFields.length > 0);
+  assert.ok(Array.isArray(wood.constraintFields) && wood.constraintFields.length > 0);
+});
+
+test('1b. GET /businesses returns the six demo businesses', when(), async () => {
+  const res = await call('GET', '/businesses');
+  assert.equal(res.status, 200);
+  assert.equal(res.body.items.length, 6);
+  assert.ok(res.body.items.every((b: any) => b.businessId && b.name && b.location));
+  // docs/02 § 4: no contact fields, ever
+  for (const b of res.body.items) {
+    for (const forbidden of ['phone', 'email', 'contact', 'address', 'contactPerson']) {
+      assert.ok(!(forbidden in b), `Business must not carry a ${forbidden} field`);
+    }
+  }
+});
+
+// ── 2, 3 ───────────────────────────────────────────────────────────────────
+test('2. POST /listings creates lst_001-shaped surplus with availableQuantity 80', when(), async () => {
+  const res = await call('POST', '/listings', {
+    businessId: SUPPLIER,
+    body: {
+      title: 'Plywood offcuts, clean and dry',
+      category: 'WOOD_OFFCUTS',
+      description: 'Weekly production offcuts from furniture assembly.',
+      totalQuantity: 80,
+      unit: 'KG',
+      condition: 'CLEAN_USABLE',
+      attributes: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 15, maxPieceSizeCm: 40, treated: false, woodType: 'Plywood' },
+      availableFrom: '2026-09-17',
+      availableUntil: '2026-09-20',
+      handoffMode: 'PICKUP',
+      referencePriceInr: 28,
+    },
+  });
+  assert.equal(res.status, 201);
+  assert.equal(res.body.availableQuantity, 80);
+  assert.equal(res.body.reservedQuantity, 0);
+  assert.equal(res.body.handedOffQuantity, 0);
+  assert.equal(res.body.status, 'ACTIVE');
+  assert.equal(res.body.businessId, SUPPLIER, 'identity comes from the header, not the body');
+  assert.ok(res.body.location, 'location is copied from the acting business');
+  ctx.listingId = res.body.listingId;
+});
+
+test('3. POST /listings with a negative quantity is 400 VALIDATION_FAILED on totalQuantity', when(), async () => {
+  const res = await call('POST', '/listings', {
+    businessId: SUPPLIER,
+    body: {
+      title: 'Bad listing', category: 'WOOD_OFFCUTS', totalQuantity: -5, unit: 'KG',
+      condition: 'CLEAN_USABLE',
+      attributes: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 15, maxPieceSizeCm: 40, treated: false },
+      availableFrom: '2026-09-17', availableUntil: '2026-09-20', handoffMode: 'PICKUP',
+    },
+  });
+  assert.equal(res.status, 400);
+  assertErrorEnvelope(res, 'VALIDATION_FAILED');
+  assert.equal(res.body.error.field, 'totalQuantity');
+});
+
+test('3b. a write without X-Business-Id is 401 BUSINESS_NOT_IDENTIFIED', when(), async () => {
+  const res = await call('POST', '/listings', { body: { title: 'x' } });
+  assert.equal(res.status, 401);
+  assertErrorEnvelope(res, 'BUSINESS_NOT_IDENTIFIED');
+});
+
+test('3c. GET /listings and GET /listings/{id} return the new listing', when(), async () => {
+  const list = await call('GET', '/listings?category=WOOD_OFFCUTS', { businessId: BUYER });
+  assert.equal(list.status, 200);
+  assert.ok(list.body.items.some((l: any) => l.listingId === ctx.listingId));
+  assert.ok(list.body.meta && 'nextCursor' in list.body.meta);
+
+  const one = await call('GET', `/listings/${ctx.listingId}`, { businessId: BUYER });
+  assert.equal(one.status, 200);
+  assert.equal(one.body.listingId, ctx.listingId);
+
+  const missing = await call('GET', '/listings/lst_does_not_exist', { businessId: BUYER });
+  assert.equal(missing.status, 404);
+  assertErrorEnvelope(missing, 'LISTING_NOT_FOUND');
+});
+
+// ── 4 ───────────────────────────────────────────────────────────────────────
+test('4. POST /requirements?withMatches=true returns the requirement and one compatible match', when(), async () => {
+  const res = await call('POST', '/requirements?withMatches=true', {
+    businessId: BUYER,
+    body: {
+      category: 'WOOD_OFFCUTS',
+      requestedQuantity: 50,
+      unit: 'KG',
+      acceptedConditions: ['UNUSED', 'CLEAN_USABLE'],
+      constraints: { category: 'WOOD_OFFCUTS', minPieceSizeCm: 10, allowTreated: false },
+      radiusKm: 15,
+      requiredBy: '2026-09-19',
+      notes: 'For non-structural decor pieces.',
+    },
+  });
+  assert.equal(res.status, 201);
+  assert.equal(res.body.requirement.status, 'OPEN');
+  ctx.requirementId = res.body.requirement.requirementId;
+
+  const compatible = res.body.matches.filter((m: any) => m.compatible);
+  assert.equal(compatible.length >= 1, true, 'expected at least one compatible match');
+  const top = compatible[0];
+  assert.equal(top.listingId, ctx.listingId);
+  assert.equal(top.compatibleQuantity, 50);
+  assert.equal(top.distanceKm, 6.9, 'Andheri East -> Bandra West is 6.9 km');
+
+  // docs/04 § 3: all six checks, always, in docs/03 § 2 order
+  assert.deepEqual(top.checks.map((c: any) => c.code), [
+    'CATEGORY_COMPATIBLE', 'QUANTITY_AVAILABLE', 'ATTRIBUTES_SATISFIED',
+    'CONDITION_ACCEPTED', 'AVAILABILITY_WINDOW', 'WITHIN_SERVICE_AREA',
+  ]);
+  assert.ok(top.checks.every((c: any) => c.passed === true));
+  assert.ok(top.checks.every((c: any) => typeof c.detail === 'string' && c.detail.length > 0 && c.detail.length <= 90));
+  assert.ok(top.listing, 'the listing is embedded so a match card needs no second fetch');
+});
+
+// ── 5 ───────────────────────────────────────────────────────────────────────
+test('5. GET /requirements/{id}/matches explains the near-misses', when(), async () => {
+  const res = await call('GET', `/requirements/${ctx.requirementId}/matches?includeNearMisses=true`, { businessId: BUYER });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.meta.compatibleCount, 1);
+  assert.equal(res.body.meta.nearMissCount, 2, 'lst_005 fails size/treatment/condition; lst_006 fails distance');
+
+  // compatible first, then near-misses (docs/04 § 3 guarantee 4)
+  const flags = res.body.items.map((m: any) => m.compatible);
+  assert.deepEqual(flags, [...flags].sort((a, b) => Number(b) - Number(a)));
+
+  // every item carries all six checks, compatible or not
+  for (const m of res.body.items) {
+    assert.equal(m.checks.length, 6);
+    assert.equal(m.compatible, m.checks.every((c: any) => c.passed));
+  }
+
+  // the category gate drops other materials entirely (docs/03 § 2)
+  assert.ok(res.body.items.every((m: any) => m.listing.category === 'WOOD_OFFCUTS'));
+
+  const distanceMiss = res.body.items.find(
+    (m: any) => !m.compatible && m.checks.some((c: any) => c.code === 'WITHIN_SERVICE_AREA' && !c.passed),
+  );
+  assert.ok(distanceMiss, 'expected a listing rejected on distance');
+  assert.equal(distanceMiss.distanceKm, 19.8, 'Vashi -> Bandra West is 19.8 km');
+
+  assert.ok(!res.body.items.some((m: any) => m.listing.businessId === BUYER), 'never match a business to itself');
+});
+
+// ── 6, 7 ───────────────────────────────────────────────────────────────────
+test('6. POST /reservations for 50 kg leaves 30 kg available and PARTIALLY_RESERVED', when(), async () => {
+  const res = await call('POST', '/reservations', {
+    businessId: BUYER,
+    body: { listingId: ctx.listingId, requirementId: ctx.requirementId, reservedQuantity: 50 },
+  });
+  assert.equal(res.status, 201);
+  assert.equal(res.body.reservation.status, 'RESERVED');
+  assert.equal(res.body.reservation.reservedQuantity, 50);
+  assert.equal(res.body.listing.availableQuantity, 30, 'the 80 -> 30 beat in the demo');
+  assert.equal(res.body.listing.reservedQuantity, 50);
+  assert.equal(res.body.listing.status, 'PARTIALLY_RESERVED');
+  assert.equal(res.body.requirement.reservedQuantity, 50);
+  assert.equal(res.body.requirement.status, 'PARTIALLY_FULFILLED');
+  assert.equal(res.body.reservation.matchReasons.length, 6, 'the reasons are snapshotted at reservation time');
+  ctx.reservationId = res.body.reservation.reservationId;
+});
+
+test('7. a second 50 kg reservation is 409 INSUFFICIENT_QUANTITY with the live quantity', when(), async () => {
+  const res = await call('POST', '/reservations', {
+    businessId: BUYER,
+    body: { listingId: ctx.listingId, reservedQuantity: 50 },
+  });
+  assert.equal(res.status, 409);
+  assertErrorEnvelope(res, 'INSUFFICIENT_QUANTITY');
+  assert.equal(res.body.error.details.availableQuantity, 30, 'the UI refreshes its stepper from this');
+});
+
+test('7b. reserving your own listing is 409 SELF_RESERVATION', when(), async () => {
+  const res = await call('POST', '/reservations', {
+    businessId: SUPPLIER,
+    body: { listingId: ctx.listingId, reservedQuantity: 1 },
+  });
+  assert.equal(res.status, 409);
+  assertErrorEnvelope(res, 'SELF_RESERVATION');
+});
+
+test('7c. GET /reservations shows the supplier their handoff queue', when(), async () => {
+  const res = await call('GET', '/reservations?role=SUPPLIER', { businessId: SUPPLIER });
+  assert.equal(res.status, 200);
+  assert.ok(res.body.items.some((r: any) => r.reservationId === ctx.reservationId));
+});
+
+// ── 8, 9 ───────────────────────────────────────────────────────────────────
+test('8. POST /reservations/{id}/handoff records the reuse', when(), async () => {
+  const res = await call('POST', `/reservations/${ctx.reservationId}/handoff`, {
+    businessId: SUPPLIER,
+    body: { note: 'Collected by buyer' },
+  });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.reservation.status, 'HANDED_OFF');
+  assert.equal(res.body.listing.handedOffQuantity, 50);
+  assert.equal(res.body.listing.reservedQuantity, 0);
+  assert.equal(res.body.listing.availableQuantity, 30, 'handoff moves reserved -> handed off, it does not restore stock');
+  assert.equal(res.body.requirement.fulfilledQuantity, 50);
+  assert.equal(res.body.requirement.status, 'FULFILLED');
+  assert.ok(res.body.impactRecord, 'an ImpactRecord is written inside the handoff transaction');
+  assert.equal(res.body.impactRecord.quantityReused, 50);
+});
+
+test('9. handing off twice is 409 INVALID_STATE and never double-counts', when(), async () => {
+  const res = await call('POST', `/reservations/${ctx.reservationId}/handoff`, { businessId: SUPPLIER, body: {} });
+  assert.equal(res.status, 409);
+  assertErrorEnvelope(res, 'INVALID_STATE');
+
+  const impact = await call('GET', '/impact');
+  assert.equal(impact.body.totals.completedExchanges, 1, 'the demo will double-click this button');
+});
+
+test('9b. only the supplier can confirm the handoff', when(), async () => {
+  const res = await call('POST', `/reservations/${ctx.reservationId}/handoff`, { businessId: BUYER, body: {} });
+  assert.ok([403, 409].includes(res.status), `expected 403 or 409, got ${res.status}`);
+});
+
+// ── 10 ──────────────────────────────────────────────────────────────────────
+test('10. GET /impact reports 50 kg from one traceable record', when(), async () => {
+  const res = await call('GET', '/impact');
+  assert.equal(res.status, 200);
+  assert.equal(res.body.totals.quantityReusedByUnit.KG, 50);
+  assert.equal(res.body.totals.completedExchanges, 1);
+  assert.equal(res.body.meta.sourceRecordCount, 1, 'every figure traces to an ImpactRecord row');
+
+  // docs/04 § 3: never sum across units, never extrapolate
+  assert.equal(typeof res.body.totals.quantityReusedByUnit, 'object');
+  assert.ok(!('quantityReused' in res.body.totals), 'no single cross-unit total - kg, units and sheets are not addable');
+  for (const banned of ['co2e', 'co2', 'carbonSavedKg', 'treesSaved']) {
+    assert.ok(!(banned in res.body.totals), `impact must not report ${banned}`);
+  }
+
+  const wood = res.body.byCategory.find((c: any) => c.category === 'WOOD_OFFCUTS');
+  assert.equal(wood.quantityReused, 50);
+});
+
+// ── envelope + routing ─────────────────────────────────────────────────────
+test('11. an unknown route is 404 ROUTE_NOT_FOUND with the standard envelope', when(), async () => {
+  const res = await call('GET', '/definitely-not-a-route');
+  assert.equal(res.status, 404);
+  assertErrorEnvelope(res, 'ROUTE_NOT_FOUND');
+});

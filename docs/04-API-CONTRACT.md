@@ -50,28 +50,53 @@ branches on - never branch on `message`.
 
 ## 2. Route table
 
-| Method | Path | Purpose | Header needed | Owner |
-|---|---|---|---|---|
-| GET | `/v1/meta/categories` | Category taxonomy, units, attribute schema, enum labels | - | M2 |
-| GET | `/v1/businesses` | All demo businesses (powers the business switcher) | - | M2 |
-| GET | `/v1/businesses/{businessId}` | One business | - | M2 |
-| POST | `/v1/listings` | Create a surplus listing | yes | M2 |
-| GET | `/v1/listings` | Browse / search / filter | optional | M2 |
-| GET | `/v1/listings/{listingId}` | Listing detail | optional | M2 |
-| POST | `/v1/listings/{listingId}/withdraw` | Supplier closes a listing early | yes | M2 |
-| GET | `/v1/listings/{listingId}/matches` | Requirements that need this material | yes | M2 |
-| POST | `/v1/requirements` | Post a material requirement | yes | M2 |
-| GET | `/v1/requirements` | List requirements | optional | M2 |
-| GET | `/v1/requirements/{requirementId}` | Requirement detail | optional | M2 |
-| POST | `/v1/requirements/{requirementId}/cancel` | Cancel a requirement | yes | M2 |
-| GET | `/v1/requirements/{requirementId}/matches` | **The core match endpoint** | yes | M2 |
-| POST | `/v1/reservations` | Reserve a quantity | yes | M2 |
-| GET | `/v1/reservations` | My reservations, both sides | yes | M2 |
-| GET | `/v1/reservations/{reservationId}` | Reservation detail | yes | M2 |
-| POST | `/v1/reservations/{reservationId}/handoff` | Supplier confirms transfer | yes | M2 |
-| POST | `/v1/reservations/{reservationId}/cancel` | Buyer cancels a hold | yes | M2 |
-| GET | `/v1/impact` | Impact dashboard aggregates | optional | M2 |
-| POST | `/v1/uploads/listing-photo` | Presigned S3 PUT (**P1**) | yes | M3 |
+| Method | Path | Purpose | Header | Owner | Build |
+|---|---|---|---|---|---|
+| GET | `/v1/meta/categories` | Category taxonomy, units, attribute schema, enum labels | - | M2 | **P0** |
+| GET | `/v1/businesses` | All demo businesses (powers the business switcher) | - | M2 | **P0** |
+| GET | `/v1/businesses/{businessId}` | One business | - | M2 | cut |
+| POST | `/v1/listings` | Create a surplus listing | yes | M2 | **P0** |
+| GET | `/v1/listings` | Browse / search / filter | optional | M2 | **P0** |
+| GET | `/v1/listings/{listingId}` | Listing detail | optional | M2 | **P0** |
+| POST | `/v1/listings/{listingId}/withdraw` | Supplier closes a listing early | yes | M2 | cut |
+| GET | `/v1/listings/{listingId}/matches` | Requirements that need this material | yes | M2 | cut |
+| POST | `/v1/requirements` | Post a material requirement (use `?withMatches=true`) | yes | M2 | **P0** |
+| GET | `/v1/requirements` | List requirements | optional | M2 | cut |
+| GET | `/v1/requirements/{requirementId}` | Requirement detail | optional | M2 | cut |
+| POST | `/v1/requirements/{requirementId}/cancel` | Cancel a requirement | yes | M2 | cut |
+| GET | `/v1/requirements/{requirementId}/matches` | **The core match endpoint** | yes | M2 | **P0** |
+| POST | `/v1/reservations` | Reserve a quantity | yes | M2 | **P0** |
+| GET | `/v1/reservations` | My reservations, both sides | yes | M2 | **P0** |
+| GET | `/v1/reservations/{reservationId}` | Reservation detail | yes | M2 | cut |
+| POST | `/v1/reservations/{reservationId}/handoff` | Supplier confirms transfer | yes | M2 | **P0** |
+| POST | `/v1/reservations/{reservationId}/cancel` | Buyer cancels a hold | yes | M2 | cut |
+| GET | `/v1/impact` | Impact dashboard aggregates | optional | M2 | **P0** |
+| POST | `/v1/uploads/listing-photo` | Presigned S3 PUT | yes | M3 | cut (was P1) |
+
+### Scope cut - 18 September
+
+**Eleven routes marked P0, nine cut.** M2's first delivery moved to Day 3, so the backend
+surface was cut to exactly what the demo shot list in
+[10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 4 walks through. Roughly 40% less
+backend work; the demo loses nothing.
+
+Cut does **not** mean "build it if there's time" - it means the route does not exist, the
+UI does not call it, and the write-up does not claim it. A cut route is a one-line
+future-work bullet, which costs nothing. A half-built route on Day 4 costs the demo.
+
+Consequences the team must respect:
+
+- **The cut endpoints have no UI.** M1: no withdraw button, no cancel-reservation button, no
+  supplier-side "who needs this?" screen, no photo upload. Remove those affordances rather
+  than wiring them to nothing.
+- **Nothing on the demo path was cut.** List surplus, post requirement, see explained
+  matches, reserve a partial quantity, confirm handoff, watch impact update: all P0.
+- **The EventBridge sweeper drops to optional.** It is one of the six services in the
+  architecture story, so if it is not built, say so plainly in the write-up instead of
+  showing it in the diagram. An honest five-service architecture beats a claimed sixth.
+- **The contract suite in § 5 covers the eleven P0 routes only** (`api/test/contract.test.ts`).
+
+Reinstating a cut route needs the § 5 suite green on all eleven P0 routes first.
 
 State-changing verbs are `POST /{id}/{action}`, not `PATCH` with a status field. The client
 cannot invent a state transition, and each action maps to exactly one server-side
