@@ -6,6 +6,8 @@
  * to show whether the API seam is reachable.
  */
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { DevPreviewPage } from './pages/DevPreviewPage.js';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:3001/v1';
 const USING_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -26,6 +28,17 @@ const SCREENS = [
 type Health = 'checking' | 'up' | 'down';
 
 export function App(): React.JSX.Element {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ScaffoldHome />} />
+        <Route path="/dev" element={<DevPreviewPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function ScaffoldHome(): React.JSX.Element {
   const [health, setHealth] = useState<Health>('checking');
 
   useEffect(() => {
