@@ -215,6 +215,41 @@ export function RequirementNewPage(): React.JSX.Element {
     clearFieldError(`constraints.${key}`);
   }
 
+  /**
+   * For RadioGroup/CheckboxGroup fields only: their onChange hands us the
+   * already-final value, so we can validate it immediately instead of
+   * waiting for a blur event that (for these controls) fires on a `state`
+   * that hasn't picked up the change yet.
+   */
+  function setFieldAndValidate<K extends keyof RequirementFormState>(key: K, value: RequirementFormState[K]): void {
+    setFormError(null);
+    const next = { ...state, [key]: value };
+    setState(next);
+    setTouched((prev) => ({ ...prev, [key]: true }));
+    const message = validateField(key as string, next, categoryMeta, today);
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      if (message) nextErrors[key as string] = message;
+      else delete nextErrors[key as string];
+      return nextErrors;
+    });
+  }
+
+  function setConstraintAndValidate(key: string, value: string): void {
+    setFormError(null);
+    const next = { ...state, constraints: { ...state.constraints, [key]: value } };
+    setState(next);
+    const path = `constraints.${key}`;
+    setTouched((prev) => ({ ...prev, [path]: true }));
+    const message = validateField(path, next, categoryMeta, today);
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      if (message) nextErrors[path] = message;
+      else delete nextErrors[path];
+      return nextErrors;
+    });
+  }
+
   function handleBlur(path: string): void {
     setTouched((prev) => ({ ...prev, [path]: true }));
     const message = validateField(path, state, categoryMeta, today);
@@ -314,10 +349,7 @@ export function RequirementNewPage(): React.JSX.Element {
             { value: 'false', label: 'No' },
           ]}
           value={raw}
-          onChange={(value) => {
-            setConstraint(field.key, value);
-            handleBlur(path);
-          }}
+          onChange={(value) => setConstraintAndValidate(field.key, value)}
           error={error}
           helper={error ? undefined : field.helper}
         />
@@ -426,10 +458,7 @@ export function RequirementNewPage(): React.JSX.Element {
               required
               options={CONDITIONS.map((c) => ({ value: c, label: enumLabel('condition', c) }))}
               value={state.acceptedConditions}
-              onChange={(value) => {
-                setField('acceptedConditions', value);
-                handleBlur('acceptedConditions');
-              }}
+              onChange={(value) => setFieldAndValidate('acceptedConditions', value)}
               error={fieldError('acceptedConditions')}
             />
 
@@ -463,10 +492,7 @@ export function RequirementNewPage(): React.JSX.Element {
             required
             options={RADIUS_OPTIONS.map((r) => ({ value: r, label: `${r} km` }))}
             value={state.radiusKm}
-            onChange={(value) => {
-              setField('radiusKm', value);
-              handleBlur('radiusKm');
-            }}
+            onChange={(value) => setFieldAndValidate('radiusKm', value)}
             error={fieldError('radiusKm')}
           />
 

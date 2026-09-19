@@ -15,12 +15,13 @@
 import { http, HttpResponse } from 'msw';
 import type {
   Business,
+  ImpactByCategory,
   ImpactTotals,
   ListingStatus,
-  MaterialCategory,
   MatchCheck,
   Unit,
 } from '@dse/shared';
+import { CATEGORY_UNITS, MATERIAL_CATEGORIES } from '@dse/shared';
 import { apiError } from './errors.js';
 import { FIXTURE_META_CATEGORIES } from './fixtures.js';
 import {
@@ -526,17 +527,24 @@ const getImpact = http.get('*/v1/impact', ({ request }) => {
         : round2(((hoursDiffs[mid] as number) + (hoursDiffs[mid + 1] as number)) / 2);
   }
 
-  const byCategoryMap = new Map<MaterialCategory, { category: MaterialCategory; quantityReused: number; unit: Unit; completedExchanges: number }>();
-  for (const r of records) {
-    const entry = byCategoryMap.get(r.category) ?? { category: r.category, quantityReused: 0, unit: r.unit, completedExchanges: 0 };
-    entry.quantityReused = round2(entry.quantityReused + r.quantityReused);
-    entry.completedExchanges += 1;
-    byCategoryMap.set(r.category, entry);
+  // Mirrors api/src/handlers/impact.ts's buildByCategory: every category is
+  // considered regardless of whether it has a completed record, and is only
+  // dropped when it has neither a record nor any active surplus.
+  const byCategory: ImpactByCategory[] = [];
+  for (const category of MATERIAL_CATEGORIES) {
+    const categoryRecords = records.filter((r) => r.category === category);
+    const activeSurplus = round2(
+      activeListings.filter((l) => l.category === category).reduce((sum, l) => sum + l.availableQuantity, 0),
+    );
+    if (categoryRecords.length === 0 && activeSurplus === 0) continue;
+    byCategory.push({
+      category,
+      quantityReused: round2(categoryRecords.reduce((sum, r) => sum + r.quantityReused, 0)),
+      unit: categoryRecords[0]?.unit ?? CATEGORY_UNITS[category].canonicalUnit,
+      completedExchanges: categoryRecords.length,
+      activeSurplus,
+    });
   }
-  const byCategory = Array.from(byCategoryMap.values()).map((entry) => ({
-    ...entry,
-    activeSurplus: round2(activeListings.filter((l) => l.category === entry.category).reduce((sum, l) => sum + l.availableQuantity, 0)),
-  }));
 
   const dailyMap = new Map<string, { date: string; quantityReused: number; completedExchanges: number }>();
   for (const r of records) {

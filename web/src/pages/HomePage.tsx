@@ -114,7 +114,7 @@ export function HomePage(): React.JSX.Element {
    * not assumed.
    */
   const nearestQuery = useListings({ sort: 'DISTANCE_ASC', limit: 8 }, { enabled: actingReady });
-  const impactQuery = useImpact();
+  const impactQuery = useImpact({ scope: 'PLATFORM' }, null);
 
   const recent = useMemo(() => recentQuery.data?.items ?? [], [recentQuery.data]);
 
@@ -180,13 +180,13 @@ export function HomePage(): React.JSX.Element {
               to="/listings/new"
               className="rounded-md bg-white px-5 py-2.5 text-[15px] font-semibold text-brand-700 hover:bg-brand-050"
             >
-              I have surplus &rarr; List Surplus
+              I have surplus &rarr; List surplus
             </Link>
             <Link
               to="/requirements/new"
               className="rounded-md border border-white/60 px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-white/10"
             >
-              I need material &rarr; Post a Requirement
+              I need material &rarr; Post a requirement
             </Link>
           </div>
         </div>

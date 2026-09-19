@@ -15,7 +15,15 @@ import type {
   ReservationsQuery,
   ReservationsResponse,
 } from '@dse/shared';
-import { getImpact, getListing, getListings, getMetaCategories, getRequirementMatches, getReservations, handoffReservation } from './client.js';
+import {
+  getImpact,
+  getListing,
+  getListings,
+  getMetaCategories,
+  getRequirementMatches,
+  getReservations,
+  handoffReservation,
+} from './client.js';
 
 /**
  * GET /v1/meta/categories - static taxonomy, fetched once and cached for
@@ -74,7 +82,10 @@ export function useReservations(query?: ReservationsQuery): UseQueryResult<Reser
 /**
  * GET /v1/listings?mine=true - S8's "My listings" tab. Shares the
  * `['listings']` prefix with `useListing` above, so one write invalidates
- * both the list and any open single-listing view.
+ * both the list and any open single-listing view. `options.enabled` lets a
+ * caller gate a listings query on something else being ready first (e.g.
+ * HomePage.tsx's "Nearest to you" rail, which needs an acting business
+ * resolved before DISTANCE_ASC is a valid sort).
  */
 export function useListings(
   query?: ListingsQuery,
@@ -112,13 +123,16 @@ export function useHandoffReservation(): UseMutationResult<
 }
 
 /**
- * GET /v1/impact - powers the home category counts and impact strip (docs/06
- * § 4) and S10. Platform scope by default; every figure traces to an
- * ImpactRecord row (docs/04 § 3).
+ * GET /v1/impact - S1's category counts/impact strip and S10's dashboard.
+ * `businessId` is not sent to the server (the header already carries it) - it
+ * is taken as a separate argument purely so the query key includes it,
+ * because two different acting businesses both requesting `scope: 'MINE'`
+ * must never share a cache entry. Callers resolve it from
+ * `useActingBusiness()` themselves so this hook stays free of that state.
  */
-export function useImpact(query?: ImpactQuery): UseQueryResult<ImpactResponse> {
+export function useImpact(query: ImpactQuery, businessId: string | null): UseQueryResult<ImpactResponse> {
   return useQuery({
-    queryKey: ['impact', query ?? null],
+    queryKey: ['impact', query.scope ?? 'PLATFORM', businessId],
     queryFn: () => getImpact(query),
   });
 }
