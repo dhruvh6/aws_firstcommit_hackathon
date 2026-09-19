@@ -12,6 +12,8 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1135.0",
+    "@aws-sdk/lib-dynamodb": "^3.1135.0",
     "@dse/shared": "*"
   },
   "devDependencies": {

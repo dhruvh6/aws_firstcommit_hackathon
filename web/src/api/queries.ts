@@ -82,27 +82,19 @@ export function useReservations(query?: ReservationsQuery): UseQueryResult<Reser
 /**
  * GET /v1/listings?mine=true - S8's "My listings" tab. Shares the
  * `['listings']` prefix with `useListing` above, so one write invalidates
- * both the list and any open single-listing view.
+ * both the list and any open single-listing view. `options.enabled` lets a
+ * caller gate a listings query on something else being ready first (e.g.
+ * HomePage.tsx's "Nearest to you" rail, which needs an acting business
+ * resolved before DISTANCE_ASC is a valid sort).
  */
-export function useListings(query?: ListingsQuery): UseQueryResult<ListingsResponse> {
+export function useListings(
+  query?: ListingsQuery,
+  options?: { enabled?: boolean },
+): UseQueryResult<ListingsResponse> {
   return useQuery({
     queryKey: ['listings', query ?? {}],
     queryFn: () => getListings(query),
-  });
-}
-
-/**
- * GET /v1/impact - S1's category counts/impact strip and S10's dashboard.
- * `businessId` is not sent to the server (the header already carries it) - it
- * is taken as a separate argument purely so the query key includes it,
- * because two different acting businesses both requesting `scope: 'MINE'`
- * must never share a cache entry. Callers resolve it from
- * `useActingBusiness()` themselves so this hook stays free of that state.
- */
-export function useImpact(query: ImpactQuery, businessId: string | null): UseQueryResult<ImpactResponse> {
-  return useQuery({
-    queryKey: ['impact', query.scope ?? 'PLATFORM', businessId],
-    queryFn: () => getImpact(query),
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -127,5 +119,20 @@ export function useHandoffReservation(): UseMutationResult<
       void queryClient.invalidateQueries({ queryKey: ['impact'] });
       void queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
+  });
+}
+
+/**
+ * GET /v1/impact - S1's category counts/impact strip and S10's dashboard.
+ * `businessId` is not sent to the server (the header already carries it) - it
+ * is taken as a separate argument purely so the query key includes it,
+ * because two different acting businesses both requesting `scope: 'MINE'`
+ * must never share a cache entry. Callers resolve it from
+ * `useActingBusiness()` themselves so this hook stays free of that state.
+ */
+export function useImpact(query: ImpactQuery, businessId: string | null): UseQueryResult<ImpactResponse> {
+  return useQuery({
+    queryKey: ['impact', query.scope ?? 'PLATFORM', businessId],
+    queryFn: () => getImpact(query),
   });
 }
