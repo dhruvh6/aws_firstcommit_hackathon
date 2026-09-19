@@ -18,7 +18,17 @@ import {
   getRequirement,
   listRequirements,
 } from './handlers/requirements.js';
-import { EntityNotFoundError, InvalidCursorError } from './repo/index.js';
+import {
+  createReservation,
+  handoffReservation,
+  listReservations,
+} from './handlers/reservations.js';
+import {
+  EntityNotFoundError,
+  InsufficientQuantityError,
+  InvalidCursorError,
+  InvalidStateError,
+} from './repo/index.js';
 
 export interface RouterRequest {
   method: string;
@@ -107,10 +117,14 @@ const routes: Route[] = [
   { method: 'GET', template: '/v1/requirements/:requirementId', handler: getRequirement },
   { method: 'GET', template: '/v1/impact', handler: getImpact },
   // POST   /v1/requirements/:requirementId/cancel
-  // POST   /v1/reservations                           -> handlers/reservations.ts
-  // GET    /v1/reservations
+  { method: 'POST', template: '/v1/reservations', handler: createReservation },
+  { method: 'GET', template: '/v1/reservations', handler: listReservations },
   // GET    /v1/reservations/:reservationId
-  // POST   /v1/reservations/:reservationId/handoff
+  {
+    method: 'POST',
+    template: '/v1/reservations/:reservationId/handoff',
+    handler: handoffReservation,
+  },
   // POST   /v1/reservations/:reservationId/cancel
   // GET    /v1/impact                                 -> handlers/impact.ts
   // POST   /v1/uploads/listing-photo                  -> handlers/uploads.ts  (P1, M3)
@@ -155,6 +169,20 @@ export async function handle(req: RouterRequest): Promise<RouterResponse> {
           reservation: 'RESERVATION_NOT_FOUND',
         } as const;
         return apiError(404, codes[err.entity], err.message);
+      }
+      if (err instanceof InsufficientQuantityError) {
+        return apiError(
+          409,
+          'INSUFFICIENT_QUANTITY',
+          `Only ${err.availableQuantity} is currently available.`,
+          { details: { availableQuantity: err.availableQuantity } },
+        );
+      }
+      if (err instanceof InvalidStateError) {
+        if (err.entity === 'listing') {
+          return apiError(409, 'LISTING_NOT_AVAILABLE', err.message);
+        }
+        return apiError(409, 'INVALID_STATE', err.message);
       }
       console.error(JSON.stringify({ level: 'error', path: req.path, err: String(err) }));
       return apiError(500, 'INTERNAL_ERROR', 'Something went wrong. Please try again.');
