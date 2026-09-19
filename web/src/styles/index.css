@@ -12,4 +12,51 @@
     outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
+
+  /* Toast - docs/07-DESIGN-SYSTEM.md § 6 Motion: slide 12px + fade, 160ms. */
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes toast-in-reduced {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Match cards appearing - docs/07-DESIGN-SYSTEM.md § 6 Motion: 120ms
+     stagger, max 3 cards, subtle. Reduced motion -> none (Skeleton.tsx's
+     motion-safe/motion-reduce pattern). */
+  @keyframes match-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Dialog / drawer - docs/07-DESIGN-SYSTEM.md § 6 Motion: fade + 8px rise, 160ms. */
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

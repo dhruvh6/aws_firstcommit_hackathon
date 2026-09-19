@@ -8,7 +8,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
+    // Plain JS/ESM tooling scripts (e.g. scripts/build-lambda.mjs). Without
+    // this block they get js.configs.recommended with no globals declared, so
+    // `no-undef` fires on `console` and `process` - a config gap, not a bug in
+    // the script. Keep the TS rules off these: typescript-eslint's recommended
+    // set targets TS files and expects the TS parser.
+    files: ['**/*.{js,mjs,cjs}'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
     rules: {
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],

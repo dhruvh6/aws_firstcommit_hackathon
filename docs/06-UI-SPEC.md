@@ -54,6 +54,16 @@ Two rules keep the borrowing honest:
 
 Ten routes. Anything not on this list is out of scope.
 
+**Build order, revised 18 September.** The demo path comes first:
+**S4 -> S5 -> S6 -> S7 -> S8**. S2 Browse and S3 Listing detail next. **S1 Home and S10
+Impact are last** - a landing page and charts win nothing if the reservation flow is
+broken, and the shot list in [10-DEMO-AND-SUBMISSION.md](10-DEMO-AND-SUBMISSION.md) § 4
+only needs S4 through S8 plus a glance at S10.
+
+The nine routes cut in [04-API-CONTRACT.md](04-API-CONTRACT.md) § 2 have **no UI**: no
+withdraw button, no cancel-reservation button, no supplier-side matches screen, no photo
+upload. Remove those affordances rather than wiring them to endpoints that do not exist.
+
 ## 3. Global shell
 
 ```
@@ -382,8 +392,12 @@ The most important screen in the product. It must be legible in a three-minute v
 4. `score` is never displayed. No percentage, no "94% match", no stars.
 5. Near-misses are collapsed by default under a count, expandable, visually de-emphasised
    (grey border, no photo emphasis) - present but never competing with the real match.
-6. Each near-miss offers the single most useful relaxation as a button, which edits the
-   requirement and refetches.
+6. Each near-miss should point at the most useful next action. **Corrected 18 September:**
+   this originally said the button "edits the requirement and refetches", which the API
+   cannot do - `/v1/requirements` supports POST and GET only, and no update endpoint was
+   ever specified or cut. The implementable form is a link to S5 prefilled with the relaxed
+   constraint, which needs no new endpoint. The empty state's "Post a different
+   requirement" action already covers the common case; prefilling is optional polish.
 
 **States**: skeleton of one large card plus two small ones; empty
 `No compatible surplus right now` with `Widen radius`, `Relax condition`, `Browse all wood

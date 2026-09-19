@@ -13,16 +13,29 @@ Confirmations are collected in
 **[issue #1](https://github.com/dhruvh6/aws_firstcommit_hackathon/issues/1)** - transcribe
 them here as they arrive, so the record lives in the repository and not only in a thread.
 
-| Item | M1 | M2 | M3 | M4 |
+**All eight rows confirmed for all four members, 18 September.** Eligibility is closed.
+
+| Item | M1 Vedika | M2 Prakriti | M3 Siddhi | M4 |
 |---|---|---|---|---|
-| University student in India | ☐ | ☐ | ☐ | ☐ |
-| 18 or older | ☐ | ☐ | ☐ | ☐ |
-| Registered individually for the Bharat Builds Tour | ☐ | ☐ | ☐ | ☐ |
-| WeMakeDevs account | ☐ | ☐ | ☐ | ☐ |
-| AWS Builder Center profile | ☐ | ☐ | ☐ | ☐ |
-| Student status verified on Builder Center | ☐ | ☐ | ☐ | ☐ |
-| **Checked in to First Commit specifically** | ☐ | ☐ | ☐ | ☐ |
-| On no other team for this stop | ☐ | ☐ | ☐ | ☐ |
+| University student in India | ☑ | ☑ | ☑ | ☑ |
+| 18 or older | ☑ | ☑ | ☑ | ☑ |
+| Registered individually for the Bharat Builds Tour | ☑ | ☑ | ☑ | ☑ |
+| WeMakeDevs account | ☑ | ☑ | ☑ | ☑ |
+| AWS Builder Center profile | ☑ | ☑ | ☑ | ☑ |
+| Student status verified on Builder Center | ☑ | ☑ | ☑ | ☑ |
+| **Checked in to First Commit specifically** | ☑ | ☑ | ☑ | ☑ |
+| On no other team for this stop | ☑ | ☑ | ☑ | ☑ |
+
+> The check-in row was confirmed separately from tour registration, because they are
+> different actions: one tour registration covers the six stops, but each hackathon needs
+> its own check-in on `wemakedevs.org/aws/first-commit`. Asked and answered per person
+> rather than inferred from "we registered".
+
+**What this closes.** Eligibility was the only item on the project that could invalidate
+the submission regardless of build quality - a single unverified member voids the entry for
+all four. It is now settled, and nothing else on the risk list has that property. Every
+remaining risk is about finishing the work, which is a schedule problem rather than a
+validity one.
 
 One tour registration covers the six tour stops, but each hackathon needs its own check-in.
 M4 confirms all four rows are complete at CP1 and says so in the channel.
@@ -56,6 +69,10 @@ So the CP9 target of Sunday 20:00 in [09-INTEGRATION-PLAN.md](09-INTEGRATION-PLA
 **our own target, not the official cutoff**. Two consequences:
 
 1. M4 checks `wemakedevs.org/aws/first-commit/schedule` once a day and posts any change.
+   **Checked 18 September, 15:00 IST: still unpublished**, same wording as the day before -
+   no kickoff time, no mentor session times, no deadline, and the in-person hours are listed
+   as pending on the schedule page even though the overview page says 8 AM - 8 PM. Keep
+   checking; until it appears, our own CP9 target stands.
 2. Submit something valid **early** and refine it. The rules allow editing a submission up
    to the deadline but not after it, so a valid submission on Saturday night beats aiming at
    an unknown Sunday time.
@@ -74,8 +91,27 @@ Day 4 20:00.**
 
 ## 3. Demo seed state
 
-`scripts/seed-demo.ts` resets to exactly this. Re-runnable and idempotent - any bad state is
-one command from clean. Full data in [`../fixtures/`](../fixtures/).
+`scripts/seed-demo.mts` puts the exchange into exactly this state. Re-runnable and
+idempotent - any bad state is one command from clean. Full data in
+[`../fixtures/`](../fixtures/).
+
+```bash
+npm run seed:demo                        # against localhost:3001/v1
+npm run seed:demo -- --dry-run           # print the plan, change nothing
+npm run seed:demo -- --include-star      # also seed lst_001 and req_001 (rehearsal)
+npm run seed:demo -- --today 2026-09-20  # preview demo-day dates
+npm run seed:demo -- --verbose           # print every POST body
+API_BASE_URL=<deployed> npm run seed:demo
+```
+
+**Every date is shifted by `today - 2026-09-17`.** The fixtures encode *offsets*, not
+absolute dates; the literals are an accident of when they were written. The script also
+prints the two dates to type on camera and checks them against match rule C5, so the
+compatible match cannot vanish mid-recording (see [../fixtures/README.md](../fixtures/README.md) § 5).
+
+It refuses to guess: it fails with a clear message and a non-zero exit if the API is
+unreachable or a business is missing, warns if reservations already exist, and warns if any
+listing already in the store has a window ending today or earlier.
 
 ### Businesses
 
@@ -119,8 +155,23 @@ precisely-explained red ones.
 - `RESERVATION_TTL_MINUTES=30` so the hold countdown is visibly short on camera.
 - Browser: fresh profile, no extensions, 1920x1080, zoom 100%, acting as
   **Furniture Workshop A**.
-- **`req_001` is created live during the recording** - the seed contains `req_002`-`req_004`
-  only, so the WOW moment is genuinely computed on camera rather than replayed.
+- **`lst_001` and `req_001` are both created live during the recording** - the seed contains
+  `lst_002`-`lst_006` and `req_002`-`req_004` only.
+
+**Why the star listing is not seeded.** Verified by rehearsal on 18 September: seeding
+`lst_001` *and* creating the 80 kg listing on camera puts **two identical compatible
+listings** in the match set, which muddies the one screen the whole submission rests on.
+With `lst_001` left out, the rehearsal produces exactly the documented result:
+
+```
+compatible=1  near-misses=2
+COMPATIBLE  <created on camera>   qty=50  dist=6.9   fails=-
+near-miss   lst_006 clone         qty=50  dist=19.8  fails=[WITHIN_SERVICE_AREA]
+near-miss   lst_005 clone         qty=25  dist=6.9   fails=[ATTRIBUTES_SATISFIED, CONDITION_ACCEPTED]
+```
+
+One green card with six ticks, two red cards each failing for a different, stated reason.
+That is the shot.
 
 ## 4. Demo video
 

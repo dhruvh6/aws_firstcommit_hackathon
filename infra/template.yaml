@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: DeadStock Exchange - Infrastructure (SAM Template)
+
+Parameters:
+  TablePrefix:
+    Type: String
+    Default: 'dse-'
+    Description: Prefix for DynamoDB table names
+
+Globals:
+  Function:
+    Timeout: 15
+    MemorySize: 512
+    Runtime: nodejs22.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        TABLE_PREFIX: !Ref TablePrefix
+        REPO_DRIVER: dynamo
+        ALLOWED_ORIGIN: '*'
+        LOG_LEVEL: info
+
+Resources:
+  # ============================================================================
+  # 1. DynamoDB Tables (docs/05-ARCHITECTURE.md § 5)
+  # ============================================================================
+
+  # Businesses Table
+  BusinessesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}businesses'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: businessId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: businessId
+          KeyType: HASH
+
+  # Listings Table
+  ListingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}listings'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: listingId
+          AttributeType: S
+        - AttributeName: categoryCity
+          AttributeType: S
+        - AttributeName: availableUntil
+          AttributeType: S
+        - AttributeName: businessId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: listingId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: gsi-category-city
+          KeySchema:
+            - AttributeName: categoryCity
+              KeyType: HASH
+            - AttributeName: availableUntil
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: gsi-business
+          KeySchema:
+            - AttributeName: businessId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # Requirements Table
+  RequirementsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}requirements'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: requirementId
+          AttributeType: S
+        - AttributeName: categoryCity
+          AttributeType: S
+        - AttributeName: requiredBy
+          AttributeType: S
+        - AttributeName: businessId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: requirementId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: gsi-category-city
+          KeySchema:
+            - AttributeName: categoryCity
+              KeyType: HASH
+            - AttributeName: requiredBy
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: gsi-business
+          KeySchema:
+            - AttributeName: businessId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # Reservations Table
+  ReservationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}reservations'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: reservationId
+          AttributeType: S
+        - AttributeName: buyerBusinessId
+          AttributeType: S
+        - AttributeName: supplierBusinessId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: expiresAt
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: reservationId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: gsi-buyer
+          KeySchema:
+            - AttributeName: buyerBusinessId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: gsi-supplier
+          KeySchema:
+            - AttributeName: supplierBusinessId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: gsi-status
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: expiresAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # Impact Table
+  ImpactTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}impact'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: impactId
+          AttributeType: S
+        - AttributeName: impactPartition
+          AttributeType: S
+        - AttributeName: completedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: impactId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: gsi-completed
+          KeySchema:
+            - AttributeName: impactPartition
+              KeyType: HASH
+            - AttributeName: completedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # ============================================================================
+  # 2. HTTP API Gateway (docs/05-ARCHITECTURE.md § 2, § 5)
+  # ============================================================================
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - 'content-type'
+          - 'x-business-id'
+        AllowMethods:
+          - 'GET'
+          - 'POST'
+          - 'OPTIONS'
+        MaxAge: 86400
+
+  # ============================================================================
+  # 3. Lambda: API Router Function (docs/05-ARCHITECTURE.md § 2, § 8)
+  # ============================================================================
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # Pre-built by esbuild (run `npm run build:lambda` from infra/) to avoid
+      # the SAM CLI Windows/OneDrive temp-dir permission bug.
+      CodeUri: .build/
+      Handler: handler.handler
+      Policies:
+        # Least privilege IAM scoped strictly to our 5 tables and their GSIs (docs/05 § 8)
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+                - dynamodb:TransactWriteItems
+              Resource:
+                - !GetAtt BusinessesTable.Arn
+                - !GetAtt ListingsTable.Arn
+                - !Sub '${ListingsTable.Arn}/index/*'
+                - !GetAtt RequirementsTable.Arn
+                - !Sub '${RequirementsTable.Arn}/index/*'
+                - !GetAtt ReservationsTable.Arn
+                - !Sub '${ReservationsTable.Arn}/index/*'
+                - !GetAtt ImpactTable.Arn
+                - !Sub '${ImpactTable.Arn}/index/*'
+      Events:
+        RootRoute:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /
+            Method: ANY
+        ProxyRoute:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  HttpApiUrl:
+    Description: Base URL of the deployed HTTP API Gateway
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: DseApiBaseUrl
+  BusinessesTableName:
+    Value: !Ref BusinessesTable
+  ListingsTableName:
+    Value: !Ref ListingsTable
+  RequirementsTableName:
+    Value: !Ref RequirementsTable
+  ReservationsTableName:
+    Value: !Ref ReservationsTable
+  ImpactTableName:
+    Value: !Ref ImpactTable

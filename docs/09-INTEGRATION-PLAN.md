@@ -75,6 +75,27 @@ Async by default: post the required line in the team channel by the checkpoint t
 | CP8 | Day 4, 17:00 | all | Demo recorded, write-up drafted | |
 | CP9 | Day 4, 20:00 | all | **Submitted.** Then re-verify every link | Never leave this to the deadline |
 
+### Where we actually are - updated 18 September, 03:00
+
+**CP2 was missed.** No listing could be created or read anywhere at Day 1, 23:00: the
+`Repo` interface, the in-memory repository and every endpoint beyond `/v1/health` were
+unstarted, and nothing was deployed.
+
+Revised sequence, agreed on Day 2:
+
+| When | What | Who |
+|---|---|---|
+| Day 2, ~10:00 | `api/src/repo/index.ts` - the interface only, no implementation. **This is the whole team's blocker** | M2 |
+| Day 2, all day | Tables in code, SAM skeleton, hello-world deployed, invoke URL posted. Blocked on nothing | M3 |
+| Day 2, all day | Fetch client, MSW handlers with failure paths, the eight components, the shell | M1 |
+| Day 2, all day | Contract suite (done), demo seed script, chase the gates | M4 |
+| Day 3 | M2's full PR: memory repo, the P0 endpoints, matching engine, reservations, handoff, impact | M2 |
+| **Day 3, 23:00** | **Decision point: if nothing works on AWS by now, switch to the Build It framing** ([08-TEAM-ROLES.md](08-TEAM-ROLES.md) § 10) and record the demo locally. Deciding this on Saturday night is a strategy; discovering it on Sunday evening is a lost submission | all |
+
+Consequences already accepted: the API surface is cut from 19 routes to 11
+([04-API-CONTRACT.md](04-API-CONTRACT.md) § 2), and S1 Home and S10 Impact move to last in
+M1's order behind the demo path S4 -> S5 -> S6 -> S7 -> S8.
+
 If a gate is missed, the response is to **cut scope, not to extend the day** - drop a P1,
 drop a screen, drop the optional charts. Cutting scope on Day 2 is a decision; discovering
 on Day 4 that nothing integrates is an accident.

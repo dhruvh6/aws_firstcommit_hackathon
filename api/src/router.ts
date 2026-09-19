@@ -11,6 +11,7 @@ import { ApiRequestError } from './errors.js';
 import { getBusiness, listBusinesses } from './handlers/businesses.js';
 import { createListing, getListing, listListings } from './handlers/listings.js';
 import { getListingMatches, getRequirementMatches } from './handlers/matches.js';
+import { getImpact } from './handlers/impact.js';
 import { getCategories } from './handlers/meta.js';
 import {
   createRequirement,
@@ -104,6 +105,7 @@ const routes: Route[] = [
     handler: getRequirementMatches,
   },
   { method: 'GET', template: '/v1/requirements/:requirementId', handler: getRequirement },
+  { method: 'GET', template: '/v1/impact', handler: getImpact },
   // POST   /v1/requirements/:requirementId/cancel
   // POST   /v1/reservations                           -> handlers/reservations.ts
   // GET    /v1/reservations

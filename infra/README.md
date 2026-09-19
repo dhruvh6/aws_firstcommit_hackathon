@@ -18,9 +18,10 @@ Must be described here:
 - S3 photo bucket with public ACLs blocked (P1)
 
 ```bash
-sam build && sam deploy --guided     # first time
-sam deploy                            # thereafter
-npm run seed:dynamo                   # load fixtures into the tables
+npm run build:lambda
+cd infra && sam deploy --guided     # first time
+sam deploy                          # thereafter
+npm run seed:dynamo                 # load fixtures into the tables
 ```
 
 Also lives here: `docs/assets/architecture.png`, exported for the README and the

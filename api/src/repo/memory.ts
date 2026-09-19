@@ -5,7 +5,7 @@
  * boundaries expected from DynamoDB. Every value crossing the boundary is
  * cloned so callers cannot mutate stored state without going through Repo.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import type {
   Business,
   ImpactRecord,
@@ -65,8 +65,12 @@ function approximatelyEqual(a: number, b: number): boolean {
 }
 
 function loadJson<T>(relativePath: string): T {
-  const url = new URL(relativePath, import.meta.url);
-  return JSON.parse(readFileSync(url, 'utf8')) as T;
+  const fileName = relativePath.split('/').pop()!;
+  const localUrl = new URL(relativePath, import.meta.url);
+  if (existsSync(localUrl)) return JSON.parse(readFileSync(localUrl, 'utf8')) as T;
+  const bundleUrl = new URL(`./fixtures/${fileName}`, import.meta.url);
+  if (existsSync(bundleUrl)) return JSON.parse(readFileSync(bundleUrl, 'utf8')) as T;
+  return JSON.parse(readFileSync(localUrl, 'utf8')) as T;
 }
 
 export function loadFixtureSeed(): MemorySeed {
