@@ -197,6 +197,41 @@ export function ListingNewPage(): React.JSX.Element {
     clearFieldError(`attributes.${key}`);
   }
 
+  /**
+   * For RadioGroup fields only: their onChange hands us the already-final
+   * value, so we can validate it immediately instead of waiting for a blur
+   * event that (for these controls) fires on a `state` that hasn't picked
+   * up the change yet.
+   */
+  function setFieldAndValidate<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]): void {
+    setFormError(null);
+    const next = { ...state, [key]: value };
+    setState(next);
+    setTouched((prev) => ({ ...prev, [key]: true }));
+    const message = validateField(key as string, next, categoryMeta, today);
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      if (message) nextErrors[key as string] = message;
+      else delete nextErrors[key as string];
+      return nextErrors;
+    });
+  }
+
+  function setAttributeAndValidate(key: string, value: string): void {
+    setFormError(null);
+    const next = { ...state, attributes: { ...state.attributes, [key]: value } };
+    setState(next);
+    const path = `attributes.${key}`;
+    setTouched((prev) => ({ ...prev, [path]: true }));
+    const message = validateField(path, next, categoryMeta, today);
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      if (message) nextErrors[path] = message;
+      else delete nextErrors[path];
+      return nextErrors;
+    });
+  }
+
   function handleBlur(path: string): void {
     setTouched((prev) => ({ ...prev, [path]: true }));
     const message = validateField(path, state, categoryMeta, today);
@@ -296,10 +331,7 @@ export function ListingNewPage(): React.JSX.Element {
             { value: 'false', label: 'No' },
           ]}
           value={raw === '' ? null : raw}
-          onChange={(value) => {
-            setAttribute(field.key, value);
-            handleBlur(path);
-          }}
+          onChange={(value) => setAttributeAndValidate(field.key, value)}
           error={error}
         />
       );
@@ -417,10 +449,7 @@ export function ListingNewPage(): React.JSX.Element {
               required
               options={CONDITIONS.map((c) => ({ value: c, label: enumLabel('condition', c) }))}
               value={state.condition}
-              onChange={(value) => {
-                setField('condition', value as ListingFormState['condition']);
-                handleBlur('condition');
-              }}
+              onChange={(value) => setFieldAndValidate('condition', value as ListingFormState['condition'])}
               error={fieldError('condition')}
             />
 
@@ -485,10 +514,7 @@ export function ListingNewPage(): React.JSX.Element {
             required
             options={HANDOFF_MODES.map((h) => ({ value: h, label: enumLabel('handoffMode', h) }))}
             value={state.handoffMode}
-            onChange={(value) => {
-              setField('handoffMode', value as ListingFormState['handoffMode']);
-              handleBlur('handoffMode');
-            }}
+            onChange={(value) => setFieldAndValidate('handoffMode', value as ListingFormState['handoffMode'])}
             error={fieldError('handoffMode')}
           />
 
