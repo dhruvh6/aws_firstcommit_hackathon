@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type {
   HandoffResponse,
+  ImpactQuery,
+  ImpactResponse,
   ListingResponse,
   ListingsQuery,
   ListingsResponse,
@@ -13,14 +15,7 @@ import type {
   ReservationsQuery,
   ReservationsResponse,
 } from '@dse/shared';
-import {
-  getListing,
-  getListings,
-  getMetaCategories,
-  getRequirementMatches,
-  getReservations,
-  handoffReservation,
-} from './client.js';
+import { getImpact, getListing, getListings, getMetaCategories, getRequirementMatches, getReservations, handoffReservation } from './client.js';
 
 /**
  * GET /v1/meta/categories - static taxonomy, fetched once and cached for
@@ -81,10 +76,14 @@ export function useReservations(query?: ReservationsQuery): UseQueryResult<Reser
  * `['listings']` prefix with `useListing` above, so one write invalidates
  * both the list and any open single-listing view.
  */
-export function useListings(query?: ListingsQuery): UseQueryResult<ListingsResponse> {
+export function useListings(
+  query?: ListingsQuery,
+  options?: { enabled?: boolean },
+): UseQueryResult<ListingsResponse> {
   return useQuery({
     queryKey: ['listings', query ?? {}],
     queryFn: () => getListings(query),
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -109,5 +108,17 @@ export function useHandoffReservation(): UseMutationResult<
       void queryClient.invalidateQueries({ queryKey: ['impact'] });
       void queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
+  });
+}
+
+/**
+ * GET /v1/impact - powers the home category counts and impact strip (docs/06
+ * § 4) and S10. Platform scope by default; every figure traces to an
+ * ImpactRecord row (docs/04 § 3).
+ */
+export function useImpact(query?: ImpactQuery): UseQueryResult<ImpactResponse> {
+  return useQuery({
+    queryKey: ['impact', query ?? null],
+    queryFn: () => getImpact(query),
   });
 }

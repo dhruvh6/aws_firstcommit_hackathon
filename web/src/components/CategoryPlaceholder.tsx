@@ -1,9 +1,12 @@
 /**
- * CategoryPlaceholder - docs/07-DESIGN-SYSTEM.md § 8 "Placeholder imagery":
- * a 4:3 box tinted with the category's categorical-palette slot colour at
- * 12% opacity, with the category's fixed icon (§ 5) centred at 30% opacity.
- * No stock photography, no generated images - four flat tints we draw
- * ourselves. OWNER: M1. Reused by MatchCard now; ListingCard/S3 later.
+ * CategoryPlaceholder - docs/07-DESIGN-SYSTEM.md § 8 "Placeholder imagery".
+ * A 4:3 box tinted with the category's categorical-palette slot colour,
+ * carrying a drawn illustration of the material (MaterialArtwork) and the
+ * category's fixed icon (§ 5) as a corner marker.
+ *
+ * Still no stock photography and no generated images: every pixel is SVG we
+ * drew, so there is no licence to credit and nothing to fetch over the network
+ * mid-recording. OWNER: M1; artwork added by M4.
  *
  * `MaterialCategory` is a closed, frozen four-value union (shared/src/domain.ts)
  * with a permanently fixed icon per docs/07 § 5, unlike a server-driven enum
@@ -14,6 +17,7 @@ import { Package } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MaterialCategory } from '@dse/shared';
 import { categoryIcon } from '../lib/categoryIcon.js';
+import { MaterialArtwork } from './MaterialArtwork.js';
 
 export interface CategoryPlaceholderProps {
   category: MaterialCategory;
@@ -53,12 +57,19 @@ export function CategoryPlaceholder({ category, className }: CategoryPlaceholder
     <div
       aria-hidden="true"
       className={cx(
-        'flex aspect-4/3 items-center justify-center overflow-hidden rounded-md',
+        'relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-md',
         TINT_CLASS[slug] ?? 'bg-ink-100',
         className,
       )}
     >
-      <Icon className={cx('h-1/3 w-1/3', ICON_CLASS[slug] ?? 'text-ink-300')} strokeWidth={2} />
+      <MaterialArtwork category={category} className="absolute inset-0 h-full w-full" />
+      {/* The icon stays as a small corner marker: the artwork shows the
+          material, the icon keeps the category's fixed visual identity
+          (docs/07 § 5) legible even at rail size. */}
+      <Icon
+        className={cx('absolute bottom-2 right-2 h-5 w-5', ICON_CLASS[slug] ?? 'text-ink-300')}
+        strokeWidth={2}
+      />
     </div>
   );
 }
