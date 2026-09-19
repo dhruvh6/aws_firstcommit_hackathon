@@ -46,3 +46,8 @@ export function formatDateTime(iso: string): string {
   const date = new Date(iso);
   return `${date.getDate()} ${MONTHS[date.getMonth()]}, ${formatTime(iso)}`;
 }
+
+/** `1400` -> "₹1,400" (docs/06 § 13 `estimatedProcurementAvoidedInr`). */
+export function formatInr(value: number): string {
+  return `₹${value.toLocaleString('en-IN')}`;
+}

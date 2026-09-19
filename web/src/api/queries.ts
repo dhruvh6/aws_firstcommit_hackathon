@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type {
   HandoffResponse,
+  ImpactQuery,
+  ImpactResponse,
   ListingResponse,
   ListingsQuery,
   ListingsResponse,
@@ -14,6 +16,7 @@ import type {
   ReservationsResponse,
 } from '@dse/shared';
 import {
+  getImpact,
   getListing,
   getListings,
   getMetaCategories,
@@ -85,6 +88,21 @@ export function useListings(query?: ListingsQuery): UseQueryResult<ListingsRespo
   return useQuery({
     queryKey: ['listings', query ?? {}],
     queryFn: () => getListings(query),
+  });
+}
+
+/**
+ * GET /v1/impact - S1's category counts/impact strip and S10's dashboard.
+ * `businessId` is not sent to the server (the header already carries it) - it
+ * is taken as a separate argument purely so the query key includes it,
+ * because two different acting businesses both requesting `scope: 'MINE'`
+ * must never share a cache entry. Callers resolve it from
+ * `useActingBusiness()` themselves so this hook stays free of that state.
+ */
+export function useImpact(query: ImpactQuery, businessId: string | null): UseQueryResult<ImpactResponse> {
+  return useQuery({
+    queryKey: ['impact', query.scope ?? 'PLATFORM', businessId],
+    queryFn: () => getImpact(query),
   });
 }
 
