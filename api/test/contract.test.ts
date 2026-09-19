@@ -41,7 +41,32 @@ const IN_2_DAYS = day(2);
 const IN_4_DAYS = day(4);
 
 /** Shared state across the ordered cases. */
-const ctx: { listingId?: string; requirementId?: string; reservationId?: string } = {};
+const ctx: {
+  listingId?: string;
+  requirementId?: string;
+  reservationId?: string;
+  /** Impact totals captured immediately before the handoff, so cases 9 and 10
+   *  can assert a DELTA. Absolute totals only hold against a pristine store,
+   *  and this suite is meant to run against the deployed API where state
+   *  accumulates - asserting `completedExchanges === 1` there reports a false
+   *  failure on correct code. */
+  impactBefore?: { exchanges: number; kg: number; records: number; woodKg: number };
+} = {};
+
+async function readImpactTotals(): Promise<{ exchanges: number; kg: number; records: number; woodKg: number }> {
+  const res = await call('GET', '/impact');
+  const body = res.body as {
+    totals: { completedExchanges: number; quantityReusedByUnit: Record<string, number> };
+    meta: { sourceRecordCount: number };
+  };
+  const byCategory = (res.body as { byCategory?: { category: string; quantityReused: number }[] }).byCategory ?? [];
+  return {
+    exchanges: body.totals.completedExchanges,
+    kg: body.totals.quantityReusedByUnit.KG ?? 0,
+    records: body.meta.sourceRecordCount,
+    woodKg: byCategory.find((c) => c.category === 'WOOD_OFFCUTS')?.quantityReused ?? 0,
+  };
+}
 
 interface Res<T = any> { status: number; body: T }
 
@@ -322,6 +347,8 @@ test('7c. GET /reservations shows the supplier their handoff queue', when(), asy
 
 // ── 8, 9 ───────────────────────────────────────────────────────────────────
 test('8. POST /reservations/{id}/handoff records the reuse', when(), async () => {
+  ctx.impactBefore = await readImpactTotals();
+
   const res = await call('POST', `/reservations/${ctx.reservationId}/handoff`, {
     businessId: SUPPLIER,
     body: { note: 'Collected by buyer' },
@@ -342,8 +369,12 @@ test('9. handing off twice is 409 INVALID_STATE and never double-counts', when()
   assert.equal(res.status, 409);
   assertErrorEnvelope(res, 'INVALID_STATE');
 
-  const impact = await call('GET', '/impact');
-  assert.equal(impact.body.totals.completedExchanges, 1, 'the demo will double-click this button');
+  const after = await readImpactTotals();
+  assert.equal(
+    after.exchanges,
+    ctx.impactBefore!.exchanges + 1,
+    'the second handoff must not add an exchange - the demo will double-click this button',
+  );
 });
 
 test('9b. only the supplier can confirm the handoff', when(), async () => {
@@ -355,9 +386,17 @@ test('9b. only the supplier can confirm the handoff', when(), async () => {
 test('10. GET /impact reports 50 kg from one traceable record', when(), async () => {
   const res = await call('GET', '/impact');
   assert.equal(res.status, 200);
-  assert.equal(res.body.totals.quantityReusedByUnit.KG, 50);
-  assert.equal(res.body.totals.completedExchanges, 1);
-  assert.equal(res.body.meta.sourceRecordCount, 1, 'every figure traces to an ImpactRecord row');
+
+  // Deltas, not absolutes: this suite also runs against the deployed API, where
+  // earlier runs and the demo itself leave records behind.
+  const after = await readImpactTotals();
+  assert.equal(after.kg, ctx.impactBefore!.kg + 50, 'the handoff added exactly 50 kg');
+  assert.equal(after.exchanges, ctx.impactBefore!.exchanges + 1, 'exactly one new exchange');
+  assert.equal(
+    after.records,
+    ctx.impactBefore!.records + 1,
+    'exactly one new ImpactRecord - every figure traces to a row',
+  );
 
   // docs/04 § 3: never sum across units, never extrapolate
   assert.equal(typeof res.body.totals.quantityReusedByUnit, 'object');
@@ -367,7 +406,12 @@ test('10. GET /impact reports 50 kg from one traceable record', when(), async ()
   }
 
   const wood = res.body.byCategory.find((c: any) => c.category === 'WOOD_OFFCUTS');
-  assert.equal(wood.quantityReused, 50);
+  assert.ok(wood, 'the wood category row must be present');
+  assert.equal(
+    wood.quantityReused,
+    ctx.impactBefore!.woodKg + 50,
+    'the handoff added exactly 50 kg to the wood category',
+  );
 });
 
 // ── envelope + routing ─────────────────────────────────────────────────────
