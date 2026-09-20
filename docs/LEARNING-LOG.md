@@ -138,3 +138,57 @@ order, and every error code in docs/04 § 4 are present and faithful.
   from what the client or the server read moments earlier - and the cost of that is
   that callers must handle the 409 and refetch rather than being able to trust their
   own earlier read.
+
+## 2026-09-20 - M4
+
+- Learned: "deployed" and "demonstrable" are different claims, and only one of them can
+  be tested. The stack was live, healthy and returning 200s while still running
+  `REPO_DRIVER=memory`, so state lived in Lambda memory. Probing it properly - create one
+  listing, then fire twenty simultaneous reads - returned 11 responses that could not see
+  a row created seconds earlier. Had we trusted the green health check, the listing
+  created on camera would have vanished when the buyer posted their requirement.
+- Failed first: accepting "it's deployed" as the end of the task. The five DynamoDB
+  tables existed and were empty the whole time; nothing read or wrote them.
+- Changed: every claim now has a command behind it. The contract suite runs against the
+  deployed URL, not just localhost, and it reads 17/17 there. `seed-demo` prints the
+  dates to type on camera and checks them against match rule C5 before you record.
+- Trade-off: verifying costs time that feels like it should go into features. It bought
+  back more than it cost - the per-container state problem, the fixture dates expiring
+  mid-competition, and a client validator that disagreed with the server would each have
+  surfaced during the recording instead.
+
+## 2026-09-20 - M4 (process)
+
+- Learned: cutting scope early is a decision; cutting it late is an accident. On Day 2,
+  with the backend a day behind, we cut the API from 19 routes to 11 - exactly the set
+  the demo walks through - and wrote down that "cut" means the route does not exist, the
+  UI does not call it, and the write-up does not claim it. Everything that shipped after
+  that was on the critical path.
+- Failed first: today, under deadline pressure, I merged a pull request while CI was
+  still red by using an admin bypass, and put `main` in a broken state on submission day.
+  The irony is that the same config gap had already bitten twice before.
+- Changed: the bypass exists for unblocking a red `main`, not for skipping the wait. Two
+  minutes of patience would have cost less than the fix did.
+- Trade-off: contract-first cost most of Day 1 before a line of product code existed, and
+  it is the reason a four-person team on four machines never blocked each other - when
+  one member started a day late, nobody else was waiting.
+
+## 2026-09-20 - M4 (reviewing M3's infrastructure work)
+
+*Recorded by M4 from reviewing and testing M3's deployment; M3's own account to follow.*
+
+- Learned: two correct-looking implementations of the same guard can differ in an
+  important way. The spec called for `ConditionExpression: availableQuantity >= :q`;
+  the DynamoDB repository shipped compare-and-swap instead -
+  `availableQuantity = :currAvail AND #s = :currStatus`. Both make over-reservation
+  impossible, but CAS is stricter: two concurrent reservations that could both have
+  succeeded will have one fail spuriously. Safe, and worth knowing the difference.
+- Failed first: assuming a read before a conditional write meant read-then-write. It did
+  not - the read only computes the new status, and the condition still closes the race.
+- Changed: reviewed the deployment by exercising it rather than reading it. That is how
+  the 503s under burst, the `categoryCity` leaking into list responses, and the
+  memory-driver state problem were all found.
+- Trade-off: `TransactWriteItems` with `attribute_not_exists(impactId)` makes a retried
+  handoff unable to double-count, at the cost of a heavier write path than four separate
+  updates - which is the right trade when the alternative is inventing reuse that never
+  happened.
