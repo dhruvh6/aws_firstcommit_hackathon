@@ -117,3 +117,24 @@ order, and every error code in docs/04 § 4 are present and faithful.
 - Trade-off: it only applies to the controls whose `onChange` carries the final value.
   Next time I write or review a form handler I will test selecting something and then
   unselecting everything, not just submitting an empty form.
+
+## 2026-09-20 - M2 (Prakriti)
+
+- Learned: why a normal read-then-write approach cannot safely manage
+  `availableQuantity`. If two buyers read that 80 kg is available at nearly the same
+  time and both reserve 50 kg, both requests may appear valid even though the listing
+  only has enough material for one. Checking the quantity in application code is
+  therefore not sufficient, because the value can change between reading and writing.
+- Failed first: treating the check as ordinary business logic - read the row, compare
+  in code, then write - which looks correct and is correct right up until two requests
+  overlap.
+- Changed: a DynamoDB `ConditionExpression`, which makes the quantity check and the
+  update one atomic database operation. The reservation succeeds only if enough stock
+  still exists at the exact moment the update is applied. When two requests compete,
+  one succeeds and the other receives a conditional-check failure, which our API
+  translates into a clear `409 INSUFFICIENT_QUANTITY` carrying the latest available
+  quantity so the client can correct itself.
+- Trade-off: concurrency correctness has to be enforced at the data layer, not assumed
+  from what the client or the server read moments earlier - and the cost of that is
+  that callers must handle the 409 and refetch rather than being able to trust their
+  own earlier read.
