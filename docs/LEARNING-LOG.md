@@ -96,3 +96,24 @@ order, and every error code in docs/04 § 4 are present and faithful.
 - Also learned: a red test is not evidence of a bug in the code under review. Four contract
   cases failed against M2's correct implementation because the suite hardcoded dates that had
   since passed, and the API was right to reject them. Nearly filed as backend bugs.
+
+## 2026-09-20 - M1 (Vedika)
+
+- Learned: React applies a state update later, not on the click. A validation check
+  that runs in the same tick is still reading the *previous* form data, so it decides
+  "nothing selected" on the very click that selected something. Clicking again appeared
+  to fix it only because the old data had caught up by then.
+- Failed first: testing S4, selecting a condition made a red "choose a condition" label
+  appear at the bottom, which then vanished on the next click. S5 had the mirror image -
+  ticking a box showed "Choose at least one accepted condition", and unticking the last
+  box cleared the error instead of showing it, even though a checkbox group can be
+  emptied back to zero, which is exactly when the error *should* appear. The same bug
+  existed in six places.
+- Changed: simply clearing the error on selection would not have been enough, because
+  unticking the last box has to bring it back. The click already hands over the new
+  value, so rather than waiting for React and hoping - which is what a `setTimeout`
+  would be - the handler validates that value directly. Browser-tested on both forms,
+  merged in #32.
+- Trade-off: it only applies to the controls whose `onChange` carries the final value.
+  Next time I write or review a form handler I will test selecting something and then
+  unselecting everything, not just submitting an empty form.
