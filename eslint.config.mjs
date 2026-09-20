@@ -17,6 +17,16 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    // Playwright driver scripts are Node files that also contain browser code:
+    // the callbacks handed to page.evaluate() and addInitScript() run inside the
+    // page, so they legitimately reference document and window. Give this
+    // directory both environments rather than littering the scripts with
+    // eslint-disable comments.
+    files: ['demo/**/*.{js,mjs,cjs,mts}'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+    rules: { '@typescript-eslint/no-unused-expressions': 'off' },
+  },
+  {
     files: ['**/*.{ts,tsx,mts,cts}'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
     rules: {
