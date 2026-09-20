@@ -43,3 +43,7 @@ tmp/
 
 # committed, contains no secrets - loaded by `npm run dev:web:mock`
 !web/.env.mock
+
+# recorded video - regenerate with demo/record-demo.mjs, do not commit
+demo/recordings/*.mp4
+demo/recordings/*.webm

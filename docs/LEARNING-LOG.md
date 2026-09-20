@@ -96,3 +96,45 @@ order, and every error code in docs/04 § 4 are present and faithful.
 - Also learned: a red test is not evidence of a bug in the code under review. Four contract
   cases failed against M2's correct implementation because the suite hardcoded dates that had
   since passed, and the API was right to reject them. Nearly filed as backend bugs.
+
+## 2026-09-20 - M1 (Vedika)
+
+- Learned: React applies a state update later, not on the click. A validation check
+  that runs in the same tick is still reading the *previous* form data, so it decides
+  "nothing selected" on the very click that selected something. Clicking again appeared
+  to fix it only because the old data had caught up by then.
+- Failed first: testing S4, selecting a condition made a red "choose a condition" label
+  appear at the bottom, which then vanished on the next click. S5 had the mirror image -
+  ticking a box showed "Choose at least one accepted condition", and unticking the last
+  box cleared the error instead of showing it, even though a checkbox group can be
+  emptied back to zero, which is exactly when the error *should* appear. The same bug
+  existed in six places.
+- Changed: simply clearing the error on selection would not have been enough, because
+  unticking the last box has to bring it back. The click already hands over the new
+  value, so rather than waiting for React and hoping - which is what a `setTimeout`
+  would be - the handler validates that value directly. Browser-tested on both forms,
+  merged in #32.
+- Trade-off: it only applies to the controls whose `onChange` carries the final value.
+  Next time I write or review a form handler I will test selecting something and then
+  unselecting everything, not just submitting an empty form.
+
+## 2026-09-20 - M2 (Prakriti)
+
+- Learned: why a normal read-then-write approach cannot safely manage
+  `availableQuantity`. If two buyers read that 80 kg is available at nearly the same
+  time and both reserve 50 kg, both requests may appear valid even though the listing
+  only has enough material for one. Checking the quantity in application code is
+  therefore not sufficient, because the value can change between reading and writing.
+- Failed first: treating the check as ordinary business logic - read the row, compare
+  in code, then write - which looks correct and is correct right up until two requests
+  overlap.
+- Changed: a DynamoDB `ConditionExpression`, which makes the quantity check and the
+  update one atomic database operation. The reservation succeeds only if enough stock
+  still exists at the exact moment the update is applied. When two requests compete,
+  one succeeds and the other receives a conditional-check failure, which our API
+  translates into a clear `409 INSUFFICIENT_QUANTITY` carrying the latest available
+  quantity so the client can correct itself.
+- Trade-off: concurrency correctness has to be enforced at the data layer, not assumed
+  from what the client or the server read moments earlier - and the cost of that is
+  that callers must handle the 409 and refetch rather than being able to trust their
+  own earlier read.
