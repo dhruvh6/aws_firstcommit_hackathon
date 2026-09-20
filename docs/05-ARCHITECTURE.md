@@ -304,8 +304,8 @@ the architecture claim in the write-up has nothing behind it.
 | API base URL | `https://m99973ijbb.execute-api.ap-south-1.amazonaws.com/v1` |
 | Region | `ap-south-1` |
 | Tables provisioned | `dse-businesses`, `dse-listings`, `dse-requirements`, `dse-reservations`, `dse-impact` |
-| Frontend | not yet deployed - Amplify not connected |
-| **Driver** | **`REPO_DRIVER=memory`** |
+| Frontend | **https://main.dn8bt2pceilk7.amplifyapp.com** - Amplify Hosting, SPA rewrite verified |
+| **Driver** | `REPO_DRIVER=dynamo` |
 
 **The deployment is not yet demo-ready, and the reason is the driver.** With the in-memory
 repository, each Lambda container keeps its own copy of state seeded from `fixtures/`.

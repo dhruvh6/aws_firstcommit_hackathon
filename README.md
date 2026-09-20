@@ -190,13 +190,18 @@ MSW (mock backend) · lucide-react
 
 ## Run it
 
+**Live app:** https://main.dn8bt2pceilk7.amplifyapp.com
 **Deployed API:** `https://m99973ijbb.execute-api.ap-south-1.amazonaws.com/v1`
-**Live app URL:** _pending - Amplify Hosting not yet connected_
 
-> The deployed API currently runs with `REPO_DRIVER=memory`, so state lives in Lambda
-> memory rather than DynamoDB and is per-container. The five tables are provisioned and
-> waiting on `repo/dynamo.ts`. Not yet suitable for recording against - see
-> [docs/05 § 9](docs/05-ARCHITECTURE.md).
+Both are live in `ap-south-1`, DynamoDB-backed, and verified end to end:
+
+- The **contract suite scores 17/17 against the deployed API** - every case in
+  [docs/04 § 5](docs/04-API-CONTRACT.md), including partial reservation, the `409`
+  concurrency guard carrying the live quantity, handoff writing an ImpactRecord, and the
+  double-handoff guard refusing to double-count.
+- Deep links resolve (`/impact`, `/browse`, `/requirements/new` all return 200), so a
+  shared URL opens the app rather than a 404.
+- The frontend calls the deployed API with no console errors.
 
 ```bash
 git clone https://github.com/dhruvh6/aws_firstcommit_hackathon.git
